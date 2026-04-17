@@ -49,3 +49,14 @@ spring:
 jwt:
   secret: rollcrew-secret-key-must-be-at-least-32-characters-long
   expiration: 86400000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+  api-docs:
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+
+logging:
+  level:
+    org.springdoc: DEBUG

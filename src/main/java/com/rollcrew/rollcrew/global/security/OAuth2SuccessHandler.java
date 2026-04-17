@@ -15,7 +15,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-
+@Slf4j
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
@@ -34,6 +34,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // 3. JWT 발급
         String token = jwtProvider.generateToken(userId, role);
+        log.info("JWT: {}", token);
 
         // 4. 응답 헤더에 JWT 담기
         response.setHeader("Authorization", "Bearer " + token);
