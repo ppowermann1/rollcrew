@@ -1,6 +1,8 @@
 package com.rollcrew.rollcrew.domain.user.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -17,6 +19,8 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(columnNames = {"provider", "provider_id"})
         }
 )
+@Builder
+@AllArgsConstructor
 public class User {
 
     @Id
@@ -35,6 +39,7 @@ public class User {
     @Column(nullable = false)
     private String providerId;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.USER;
