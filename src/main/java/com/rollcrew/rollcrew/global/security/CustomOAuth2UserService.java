@@ -24,14 +24,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         String provider = userRequest.getClientRegistration().getRegistrationId();
         Map<String, Object> attributes = oAuth2User.getAttributes();
+        String providerId;
+        String email;
+        String nickname;
 
-        // 카카오 응답에서 데이터 추출
-        String providerId = String.valueOf(attributes.get("id"));
-        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-        String nickname = (String) profile.get("nickname");
-        String email = provider + "_" + providerId + "@rollcrew.com";
-
+        if (provider.equals("naver")) {
+            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+            providerId = (String) response.get("id");
+            email = (String) response.get("email");
+            nickname = (String) response.get("nickname");
+        } else { // kakao
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+            providerId = String.valueOf(attributes.get("id"));
+            nickname = (String) profile.get("nickname");
+            email = provider + "_" + providerId + "@rollcrew.com";
+        }
         // DB 조회 - 없으면 신규 저장
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseGet(() -> userRepository.save(
