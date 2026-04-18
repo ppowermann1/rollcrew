@@ -68,7 +68,7 @@ public class CommunityPostService {
     private CommunityPostListResponse toListResponse(CommunityPost post) {
         String nickname = communityPostNicknameRepository.findByCommunityPost(post)
                 .map(CommunityPostNickname::getNickname)
-                .orElse("알 수 없음");
+                .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
         long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(post, LikeType.LIKE);
         long dislikeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(post, LikeType.DISLIKE);
 
