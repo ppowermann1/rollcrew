@@ -6,43 +6,28 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class CommunityPost {
+public class CommunityPostLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_post_id", nullable = false)
+    private CommunityPost communityPost;
 
-    @Column(nullable = false)
-    private String title;
-
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-
-
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CommunityCategory communityCategory;
-
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
-
+    @Column(nullable = false)
+    private LikeType likeType; // LIKE, DISLIKE
 }
