@@ -1,22 +1,19 @@
 package com.rollcrew.rollcrew.domain.community.entity;
 
+
 import com.rollcrew.rollcrew.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class CommunityPost {
+public class CommunityPostNickname {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,23 +23,13 @@ public class CommunityPost {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-
-    @Column(nullable = false)
-    private String title;
-
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_post_id", nullable = false)
+    private CommunityPost communityPost;
 
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CommunityCategory communityCategory;
+    private String nickname;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 
 }

@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class CommunityPost {
+public class CommunityComment {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,17 +28,13 @@ public class CommunityPost {
     private User user;
 
 
-    @Column(nullable = false)
-    private String title;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_post_id", nullable = false)
+    private CommunityPost communityPost;
 
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
-
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CommunityCategory communityCategory;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
