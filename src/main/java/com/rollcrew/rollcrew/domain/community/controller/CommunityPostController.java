@@ -1,15 +1,17 @@
 package com.rollcrew.rollcrew.domain.community.controller;
 
+import com.rollcrew.rollcrew.domain.community.dto.CommunityPostListResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostRequest;
 import com.rollcrew.rollcrew.domain.community.service.CommunityPostService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/community/posts")
@@ -23,5 +25,15 @@ public class CommunityPostController {
                                                         @RequestBody CommunityPostRequest request) {
         Long response = communityPostService.createPost(userId, request);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<CommunityPostListResponse>>> getCommunityPostList(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<CommunityPostListResponse> responses = communityPostService.getPostList(pageable);
+
+        return ResponseEntity.ok().body(ApiResponse.ok(responses));
     }
 }

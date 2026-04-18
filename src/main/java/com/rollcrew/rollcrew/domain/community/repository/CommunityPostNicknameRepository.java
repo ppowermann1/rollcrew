@@ -1,9 +1,15 @@
 package com.rollcrew.rollcrew.domain.community.repository;
 
+import com.rollcrew.rollcrew.domain.community.entity.CommunityPost;
 import com.rollcrew.rollcrew.domain.community.entity.CommunityPostNickname;
+import jakarta.persistence.OneToOne;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface CommunityPostNicknameRepository extends JpaRepository<CommunityPostNickname, Long> {
+
+    Optional<CommunityPostNickname> findByCommunityPost(CommunityPost post);
 }
