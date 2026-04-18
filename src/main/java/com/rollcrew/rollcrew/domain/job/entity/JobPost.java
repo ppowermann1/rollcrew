@@ -56,5 +56,11 @@ public class JobPost {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-
+    public void update(String title, String content, JobCategory category, String shootingDates, PostStatus status) {
+        if (title != null) this.title = title;
+        if (content != null) this.content = content;
+        if (category != null) this.category = category;
+        if (shootingDates != null) this.shootingDates = shootingDates;
+        if (status != null) this.status = status;
+    }
 }
