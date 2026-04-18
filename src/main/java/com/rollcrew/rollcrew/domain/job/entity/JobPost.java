@@ -3,6 +3,8 @@ package com.rollcrew.rollcrew.domain.job.entity;
 
 import com.rollcrew.rollcrew.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class JobPost {
 
 
@@ -37,11 +41,15 @@ public class JobPost {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private PostStatus status = PostStatus.OPEN;
 
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private String shootingDates;
 
     @UpdateTimestamp
     @Column(nullable = false)
