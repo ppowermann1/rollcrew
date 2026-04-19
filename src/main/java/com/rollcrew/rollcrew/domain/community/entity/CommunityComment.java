@@ -46,4 +46,7 @@ public class CommunityComment {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }

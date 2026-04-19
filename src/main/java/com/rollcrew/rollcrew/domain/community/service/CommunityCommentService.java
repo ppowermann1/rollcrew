@@ -2,6 +2,7 @@ package com.rollcrew.rollcrew.domain.community.service;
 
 import com.rollcrew.rollcrew.domain.community.dto.CommentCreateRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommentResponse;
+import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
 import com.rollcrew.rollcrew.domain.community.entity.CommunityComment;
 import com.rollcrew.rollcrew.domain.community.entity.CommunityPost;
 import com.rollcrew.rollcrew.domain.community.entity.CommunityPostNickname;
@@ -13,6 +14,7 @@ import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
 import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,5 +131,37 @@ public class CommunityCommentService {
                                 .toList())
                         .build())
                 .toList();
+    }
+
+
+    public CommentResponse updateComment(Long commentId, @Valid CommentUpdateRequest request, CustomOAuth2User principal) {
+
+        CommunityComment communityComment = communityCommentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        User user = userRepository.findById(principal.getUser().getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+
+        if (!communityComment.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_COMMENT);
+        }
+
+
+        CommunityPostNickname communityPostNickname = communityPostNicknameRepository
+                .findByUserAndCommunityPost(user, communityComment.getCommunityPost())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
+
+        communityComment.updateContent(request.getContent());
+
+        return
+                CommentResponse.builder()
+                        .id(communityComment.getId())
+                        .content(request.getContent())
+                        .nickname(communityPostNickname.getNickname())
+                        .createdAt(communityComment.getCreatedAt())
+                        .replies(List.of())
+                        .build();
+
     }
 }

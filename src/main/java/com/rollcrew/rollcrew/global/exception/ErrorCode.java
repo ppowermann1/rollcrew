@@ -13,7 +13,9 @@ public enum ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다"),
     NICKNAME_NOT_FOUND(HttpStatus.NOT_FOUND, "닉네임을 찾을 수 없습니다"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다"),
-    COMMENT_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "댓글의 깊이는 1을 초과할 수 없습니다");
+    COMMENT_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "댓글의 깊이는 1을 초과할 수 없습니다"),
+    UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "인증되지 않은 접근입니다"),
+    FORBIDDEN_COMMENT(HttpStatus.FORBIDDEN, "댓글에 대한 권한이 없습니다");
 
     private final HttpStatus httpStatus;
     private final String message;
