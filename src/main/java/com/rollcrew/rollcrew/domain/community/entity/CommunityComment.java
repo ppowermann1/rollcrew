@@ -46,6 +46,12 @@ public class CommunityComment {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    private boolean isDeleted = false;
+
+    public void softDelete() {
+        this.isDeleted = true;
+    }
+
     public void updateContent(String content) {
         this.content = content;
     }

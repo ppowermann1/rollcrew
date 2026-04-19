@@ -47,4 +47,11 @@ public class CommunityCommentController {
         CommentResponse response = communityCommentService.updateComment(commentId, request, principal);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
+
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId,
+                                                           @AuthenticationPrincipal CustomOAuth2User principal) {
+        communityCommentService.deleteComment(commentId, principal);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
 }

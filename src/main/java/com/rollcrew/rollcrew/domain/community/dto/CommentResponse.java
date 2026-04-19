@@ -19,4 +19,5 @@ public class CommentResponse {
     private String nickname;
     private LocalDateTime createdAt;
     private List<CommentResponse> replies;
+    private Boolean isDeleted;
 }

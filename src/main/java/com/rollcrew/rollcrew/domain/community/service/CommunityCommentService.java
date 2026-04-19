@@ -81,6 +81,7 @@ public class CommunityCommentService {
                 .content(communityComment.getContent())
                 .nickname(postNickname.getNickname())
                 .createdAt(communityComment.getCreatedAt())
+                .isDeleted(communityComment.isDeleted())
                 .replies(List.of())
                 .build();
     }
@@ -117,6 +118,7 @@ public class CommunityCommentService {
                 .filter(c -> c.getParent() == null)
                 .map(c -> CommentResponse.builder()
                         .id(c.getId())
+                        .isDeleted(c.isDeleted())
                         .content(c.getContent())
                         .nickname(nicknameMap.get(c.getUser().getId()))
                         .createdAt(c.getCreatedAt())
@@ -127,6 +129,7 @@ public class CommunityCommentService {
                                         .nickname(nicknameMap.get(reply.getUser().getId()))
                                         .createdAt(reply.getCreatedAt())
                                         .replies(List.of())
+                                        .isDeleted(reply.isDeleted())
                                         .build())
                                 .toList())
                         .build())
@@ -160,8 +163,23 @@ public class CommunityCommentService {
                         .content(request.getContent())
                         .nickname(communityPostNickname.getNickname())
                         .createdAt(communityComment.getCreatedAt())
+                        .isDeleted(communityComment.isDeleted())
                         .replies(List.of())
                         .build();
 
+    }
+
+    @Transactional
+    public void deleteComment(Long commentId, CustomOAuth2User principal) {
+        User user = userRepository.findById(principal.getUser().getId()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        CommunityComment comment = communityCommentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        if (!comment.getUser().getId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_COMMENT);
+        }
+
+        comment.softDelete();
     }
 }
