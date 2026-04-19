@@ -1,0 +1,84 @@
+
+<style>
+#erd-final { background: #ffffff; padding: 32px; border-radius: 8px; }
+#erd-final svg text { fill: #0a0a0a !important; font-weight: 500 !important; }
+</style>
+<div id="erd-final"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: 'Arial, sans-serif',
+  themeVariables: {
+    darkMode: false,
+    fontSize: '14px',
+    fontFamily: 'Arial, sans-serif',
+    primaryColor: '#dbeafe',
+    primaryBorderColor: '#1d4ed8',
+    primaryTextColor: '#0a0a0a',
+    lineColor: '#1e293b',
+    textColor: '#0a0a0a',
+    attributeBackgroundColorEven: '#eff6ff',
+    attributeBackgroundColorOdd: '#dbeafe',
+  },
+});
+const { svg } = await mermaid.render('erd-final-svg', `erDiagram
+  USER ||--|| PROFILE : has
+  USER ||--o{ JOB_POST : writes
+  USER ||--o{ COMMUNITY_POST : writes
+  JOB_POST ||--o{ JOB_POST_IMAGE : has
+
+  USER {
+    bigint id PK
+    string email
+    string nickname
+    string provider
+    string provider_id
+    string role
+    timestamp created_at
+    timestamp updated_at
+  }
+  PROFILE {
+    bigint id PK
+    bigint user_id FK
+    string bio
+    string portfolio_url
+    string profile_image_url
+    timestamp created_at
+    timestamp updated_at
+  }
+  JOB_POST {
+    bigint id PK
+    bigint user_id FK
+    string title
+    string content
+    string category
+    string status
+    timestamp created_at
+    timestamp updated_at
+  }
+  JOB_POST_IMAGE {
+    bigint id PK
+    bigint job_post_id FK
+    string image_url
+    int sort_order
+    timestamp created_at
+  }
+  COMMUNITY_POST {
+    bigint id PK
+    bigint user_id FK
+    string title
+    string content
+    boolean is_anonymous
+    timestamp created_at
+    timestamp updated_at
+  }
+`);
+document.getElementById('erd-final').innerHTML = svg;
+document.querySelectorAll('#erd-final svg text').forEach(t => {
+  t.style.fill = '#0a0a0a';
+  t.style.fontWeight = '600';
+});
+</script>
