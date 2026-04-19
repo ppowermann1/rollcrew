@@ -20,4 +20,7 @@ public class CommentResponse {
     private LocalDateTime createdAt;
     private List<CommentResponse> replies;
     private Boolean isDeleted;
+
+    private long likeCount;
+    private long dislikeCount;
 }

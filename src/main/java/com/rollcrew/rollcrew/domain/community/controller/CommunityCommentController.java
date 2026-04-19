@@ -3,6 +3,7 @@ package com.rollcrew.rollcrew.domain.community.controller;
 import com.rollcrew.rollcrew.domain.community.dto.CommentCreateRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommentResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
+import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityCommentService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
 import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
@@ -52,6 +53,16 @@ public class CommunityCommentController {
     public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId,
                                                            @AuthenticationPrincipal CustomOAuth2User principal) {
         communityCommentService.deleteComment(commentId, principal);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/{commentId}/like")
+    public ResponseEntity<ApiResponse<Void>> toggleCommentLike(@PathVariable Long commentId,
+                                                               @RequestParam LikeType likeType,
+                                                               @AuthenticationPrincipal CustomOAuth2User principal) {
+
+        communityCommentService.toggleCommentLike(commentId, likeType, principal);
+
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

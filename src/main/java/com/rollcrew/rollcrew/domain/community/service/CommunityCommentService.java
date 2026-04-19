@@ -3,9 +3,8 @@ package com.rollcrew.rollcrew.domain.community.service;
 import com.rollcrew.rollcrew.domain.community.dto.CommentCreateRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommentResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
-import com.rollcrew.rollcrew.domain.community.entity.CommunityComment;
-import com.rollcrew.rollcrew.domain.community.entity.CommunityPost;
-import com.rollcrew.rollcrew.domain.community.entity.CommunityPostNickname;
+import com.rollcrew.rollcrew.domain.community.entity.*;
+import com.rollcrew.rollcrew.domain.community.repository.CommunityCommentLikeRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityCommentRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostNicknameRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostRepository;
@@ -36,6 +35,7 @@ public class CommunityCommentService {
     private final CommunityPostNicknameRepository communityPostNicknameRepository;
     private final CommunityCommentRepository communityCommentRepository;
     private final UserRepository userRepository;
+    private final CommunityCommentLikeRepository communityCommentLikeRepository;
 
     public CommentResponse createComments(Long postId, CommentCreateRequest request, CustomOAuth2User principal) {
 
@@ -96,10 +96,10 @@ public class CommunityCommentService {
 
         Page<CommunityComment> byCommunityPostWithParent = communityCommentRepository.findByCommunityPostWithParent(communityPost, pageable);
 
-// 1. Page에서 List 꺼내기
+        // 1. 페이징된 결과에서 전체 댓글 리스트 추출
         List<CommunityComment> allComments = byCommunityPostWithParent.getContent();
 
-// 2. 닉네임 한 방에 조회 → Map<userId, nickname>
+        // 2. 해당 게시글의 작성자별 익명 닉네임 일괄 조회 (Map 변환)
         Map<Long, String> nicknameMap = communityPostNicknameRepository
                 .findByCommunityPost(communityPost)
                 .stream()
@@ -108,17 +108,27 @@ public class CommunityCommentService {
                         CommunityPostNickname::getNickname
                 ));
 
-// 3. 대댓글 Map으로 분류 → Map<parentId, List<대댓글>>
+        // 3. 대댓글 그룹화 (부모 ID 기준 Map 변환)
         Map<Long, List<CommunityComment>> replyMap = allComments.stream()
                 .filter(c -> c.getParent() != null)
                 .collect(Collectors.groupingBy(c -> c.getParent().getId()));
 
-// 4. 최상위 댓글만 필터 → CommentResponse 변환
+        // 4. 댓글별 좋아요/싫어요 데이터 일괄 조회 및 그룹화
+        Map<Long, List<CommunityCommentLike>> likeMap = communityCommentLikeRepository
+                .findByCommunityCommentIn(allComments)
+                .stream()
+                .collect(Collectors.groupingBy(cl -> cl.getCommunityComment().getId()));
+
+        // 5. 최상위 댓글 필터링 및 대댓글 매핑을 포함한 DTO 변환
         return allComments.stream()
                 .filter(c -> c.getParent() == null)
                 .map(c -> CommentResponse.builder()
                         .id(c.getId())
                         .isDeleted(c.isDeleted())
+                        .likeCount(likeMap.getOrDefault(c.getId(), List.of()).stream()
+                                .filter(cl -> cl.getLikeType() == LikeType.LIKE).count())
+                        .dislikeCount(likeMap.getOrDefault(c.getId(), List.of()).stream()
+                                .filter(cl -> cl.getLikeType() == LikeType.DISLIKE).count())
                         .content(c.getContent())
                         .nickname(nicknameMap.get(c.getUser().getId()))
                         .createdAt(c.getCreatedAt())
@@ -128,6 +138,10 @@ public class CommunityCommentService {
                                         .content(reply.getContent())
                                         .nickname(nicknameMap.get(reply.getUser().getId()))
                                         .createdAt(reply.getCreatedAt())
+                                        .likeCount(likeMap.getOrDefault(reply.getId(), List.of()).stream()
+                                                .filter(cl -> cl.getLikeType() == LikeType.LIKE).count())
+                                        .dislikeCount(likeMap.getOrDefault(reply.getId(), List.of()).stream()
+                                                .filter(cl -> cl.getLikeType() == LikeType.DISLIKE).count())
                                         .replies(List.of())
                                         .isDeleted(reply.isDeleted())
                                         .build())
@@ -181,5 +195,39 @@ public class CommunityCommentService {
         }
 
         comment.softDelete();
+    }
+
+    @Transactional
+    public void toggleCommentLike(Long commentId, LikeType likeType, CustomOAuth2User principal) {
+
+        User user = userRepository.findById(principal.getUser().getId()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        CommunityComment communityComment = communityCommentRepository.findById(commentId).orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+
+        Optional<CommunityCommentLike> existing = communityCommentLikeRepository.findByUserAndCommunityComment(user, communityComment);
+
+        if (existing.isPresent()) {
+            if (existing.get().getLikeType() == likeType) {
+                communityCommentLikeRepository.delete(existing.get());
+            } else {
+                communityCommentLikeRepository.delete(existing.get());
+                communityCommentLikeRepository.save(
+                        CommunityCommentLike.builder()
+                                .user(user)
+                                .communityComment(communityComment)
+                                .likeType(likeType)
+                                .build()
+                );
+            }
+        } else {
+
+            communityCommentLikeRepository.save(
+                    CommunityCommentLike.builder()
+                            .user(user)
+                            .communityComment(communityComment)
+                            .likeType(likeType)
+                            .build());
+        }
     }
 }
