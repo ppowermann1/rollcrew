@@ -11,7 +11,6 @@ import com.rollcrew.rollcrew.domain.user.entity.Role;
 import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -70,7 +68,6 @@ class CommunityPostControllerTest {
     private CommunityPostService communityPostService;
 
     private Authentication auth;
-    private CustomOAuth2User principal;
     private CommunityPostResponse mockPostResponse;
     private CommunityPostListResponse mockListResponse;
 
@@ -85,8 +82,7 @@ class CommunityPostControllerTest {
                 .role(Role.USER)
                 .build();
 
-        principal = new CustomOAuth2User(mockUser, Map.of());
-        auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
 
         mockPostResponse = CommunityPostResponse.builder()
                 .title("테스트 제목")
@@ -117,7 +113,7 @@ class CommunityPostControllerTest {
                 .nickname("졸린 망고")
                 .build();
 
-        given(communityPostService.createPost(any(CustomOAuth2User.class), any(CommunityPostRequest.class)))
+        given(communityPostService.createPost(any(Long.class), any(CommunityPostRequest.class)))
                 .willReturn(1L);
 
         mockMvc.perform(post("/api/community/posts")
@@ -229,7 +225,7 @@ class CommunityPostControllerTest {
     @Test
     @DisplayName("게시글 좋아요 토글 성공 - 200")
     void togglePostLike_success() throws Exception {
-        doNothing().when(communityPostService).togglePostLike(eq(1L), eq(LikeType.LIKE), any(CustomOAuth2User.class));
+        doNothing().when(communityPostService).togglePostLike(eq(1L), eq(LikeType.LIKE), any(Long.class));
 
         mockMvc.perform(post("/api/community/posts/1/like")
                         .with(authentication(auth))
@@ -241,7 +237,7 @@ class CommunityPostControllerTest {
     @Test
     @DisplayName("게시글 싫어요 토글 성공 - 200")
     void togglePostDislike_success() throws Exception {
-        doNothing().when(communityPostService).togglePostLike(eq(1L), eq(LikeType.DISLIKE), any(CustomOAuth2User.class));
+        doNothing().when(communityPostService).togglePostLike(eq(1L), eq(LikeType.DISLIKE), any(Long.class));
 
         mockMvc.perform(post("/api/community/posts/1/like")
                         .with(authentication(auth))
