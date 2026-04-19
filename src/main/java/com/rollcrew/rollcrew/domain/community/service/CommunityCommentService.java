@@ -101,7 +101,7 @@ public class CommunityCommentService {
 
         // 2. 해당 게시글의 작성자별 익명 닉네임 일괄 조회 (Map 변환)
         Map<Long, String> nicknameMap = communityPostNicknameRepository
-                .findByCommunityPost(communityPost)
+                .findAuthorNicknameByCommunityPost(communityPost)
                 .stream()
                 .collect(Collectors.toMap(
                         n -> n.getUser().getId(),
@@ -130,13 +130,13 @@ public class CommunityCommentService {
                         .dislikeCount(likeMap.getOrDefault(c.getId(), List.of()).stream()
                                 .filter(cl -> cl.getLikeType() == LikeType.DISLIKE).count())
                         .content(c.getContent())
-                        .nickname(nicknameMap.get(c.getUser().getId()))
+                        .nickname(nicknameMap.getOrDefault(c.getUser().getId(), "Unknown"))
                         .createdAt(c.getCreatedAt())
                         .replies(replyMap.getOrDefault(c.getId(), List.of()).stream()
                                 .map(reply -> CommentResponse.builder()
                                         .id(reply.getId())
                                         .content(reply.getContent())
-                                        .nickname(nicknameMap.get(reply.getUser().getId()))
+                                        .nickname(nicknameMap.getOrDefault(reply.getUser().getId(), "Unknown"))
                                         .createdAt(reply.getCreatedAt())
                                         .likeCount(likeMap.getOrDefault(reply.getId(), List.of()).stream()
                                                 .filter(cl -> cl.getLikeType() == LikeType.LIKE).count())

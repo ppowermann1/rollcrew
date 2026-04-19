@@ -43,17 +43,17 @@ public class CommunityPostService {
         User user = userRepository.findById(principal.getUser().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        CommunityPost cratedPost = CommunityPost.builder()
+        CommunityPost createdPost = CommunityPost.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .communityCategory(request.getCommunityCategory())
                 .user(user)
                 .build();
 
-        communityPostRepository.save(cratedPost);
+        communityPostRepository.save(createdPost);
 
         CommunityPostNickname createCommunityPostNickname = CommunityPostNickname.builder()
-                .communityPost(cratedPost)
+                .communityPost(createdPost)
                 .nickname(request.getNickname())
                 .user(user)
                 .build();
@@ -61,7 +61,7 @@ public class CommunityPostService {
         communityPostNicknameRepository.save(createCommunityPostNickname);
 
 
-        return cratedPost.getId();
+        return createdPost.getId();
 
     }
 
@@ -80,7 +80,8 @@ public class CommunityPostService {
                 .stream()
                 .collect(Collectors.toMap(
                         n -> n.getCommunityPost().getId(),
-                        CommunityPostNickname::getNickname
+                        CommunityPostNickname::getNickname,
+                        (existing, replacement) -> existing
                 ));
 
         return posts.map(post -> toListResponse(post, likeMap, nicknameMap));
@@ -109,7 +110,7 @@ public class CommunityPostService {
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        CommunityPostNickname communityPostNickname = communityPostNicknameRepository.findByCommunityPost(communityPost)
+        CommunityPostNickname communityPostNickname = communityPostNicknameRepository.findAuthorNicknameByCommunityPost(communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
         long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);
@@ -144,7 +145,7 @@ public class CommunityPostService {
         communityPost.updatePost(request.getTitle(), request.getContent());
 
         CommunityPostNickname communityPostNickname = communityPostNicknameRepository
-                .findByCommunityPost(communityPost)
+                .findAuthorNicknameByCommunityPost(communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
         return CommunityPostResponse.builder()
