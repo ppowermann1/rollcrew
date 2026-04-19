@@ -100,7 +100,7 @@ class CommunityPostServiceTest {
         given(communityPostRepository.save(any(CommunityPost.class))).willReturn(mockPost);
         given(communityPostNicknameRepository.save(any(CommunityPostNickname.class))).willReturn(mockNickname);
 
-        communityPostService.createPost(mockPrincipal, request);
+        communityPostService.createPost(1L, request);
 
         verify(communityPostRepository).save(any(CommunityPost.class));
         verify(communityPostNicknameRepository).save(any(CommunityPostNickname.class));
@@ -118,7 +118,7 @@ class CommunityPostServiceTest {
 
         given(userRepository.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityPostService.createPost(mockPrincipal, request))
+        assertThatThrownBy(() -> communityPostService.createPost(1L, request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
     }
@@ -304,7 +304,7 @@ class CommunityPostServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityPostLikeRepository.findByUserAndCommunityPost(mockUser, mockPost)).willReturn(Optional.empty());
 
-        communityPostService.togglePostLike(1L, LikeType.LIKE, mockPrincipal);
+        communityPostService.togglePostLike(1L, LikeType.LIKE, 1L);
 
         verify(communityPostLikeRepository).save(any(CommunityPostLike.class));
     }
@@ -319,7 +319,7 @@ class CommunityPostServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityPostLikeRepository.findByUserAndCommunityPost(mockUser, mockPost)).willReturn(Optional.of(existing));
 
-        communityPostService.togglePostLike(1L, LikeType.LIKE, mockPrincipal);
+        communityPostService.togglePostLike(1L, LikeType.LIKE, 1L);
 
         verify(communityPostLikeRepository).delete(existing);
     }
@@ -334,7 +334,7 @@ class CommunityPostServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityPostLikeRepository.findByUserAndCommunityPost(mockUser, mockPost)).willReturn(Optional.of(existing));
 
-        communityPostService.togglePostLike(1L, LikeType.DISLIKE, mockPrincipal);
+        communityPostService.togglePostLike(1L, LikeType.DISLIKE, 1L);
 
         verify(communityPostLikeRepository).delete(existing);
         verify(communityPostLikeRepository).save(any(CommunityPostLike.class));
@@ -345,7 +345,7 @@ class CommunityPostServiceTest {
     void togglePostLike_userNotFound() {
         given(userRepository.findById(1L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityPostService.togglePostLike(1L, LikeType.LIKE, mockPrincipal))
+        assertThatThrownBy(() -> communityPostService.togglePostLike(1L, LikeType.LIKE, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
     }
@@ -356,7 +356,7 @@ class CommunityPostServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(mockUser));
         given(communityPostRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityPostService.togglePostLike(99L, LikeType.LIKE, mockPrincipal))
+        assertThatThrownBy(() -> communityPostService.togglePostLike(99L, LikeType.LIKE, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
     }
