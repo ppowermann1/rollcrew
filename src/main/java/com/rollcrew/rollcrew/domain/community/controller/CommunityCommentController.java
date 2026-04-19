@@ -57,12 +57,10 @@ public class CommunityCommentController {
     }
 
     @PostMapping("/{commentId}/like")
-    public ResponseEntity<ApiResponse<Void>> toggleCommentLike(@PathVariable Long commentId,
+    public ResponseEntity<ApiResponse<Void>> togglePostLike(@PathVariable Long commentId,
                                                                @RequestParam LikeType likeType,
                                                                @AuthenticationPrincipal CustomOAuth2User principal) {
-
         communityCommentService.toggleCommentLike(commentId, likeType, principal);
-
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

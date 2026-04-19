@@ -3,8 +3,10 @@ package com.rollcrew.rollcrew.domain.community.controller;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostListResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostResponse;
+import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityPostService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
+import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,5 +43,13 @@ public class CommunityPostController {
     public ResponseEntity<ApiResponse<CommunityPostResponse>> getCommunityPost(@PathVariable Long postId) {
         CommunityPostResponse response = communityPostService.getCommunityPost(postId);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<ApiResponse<Void>> togglePostLike(@PathVariable Long postId,
+                                                               @RequestParam LikeType likeType,
+                                                               @AuthenticationPrincipal CustomOAuth2User principal) {
+        communityPostService.togglePostLike(postId, likeType, principal);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

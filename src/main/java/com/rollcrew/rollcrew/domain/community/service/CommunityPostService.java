@@ -4,10 +4,7 @@ package com.rollcrew.rollcrew.domain.community.service;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostListResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostResponse;
-import com.rollcrew.rollcrew.domain.community.entity.CommunityPost;
-import com.rollcrew.rollcrew.domain.community.entity.CommunityPostImage;
-import com.rollcrew.rollcrew.domain.community.entity.CommunityPostNickname;
-import com.rollcrew.rollcrew.domain.community.entity.LikeType;
+import com.rollcrew.rollcrew.domain.community.entity.*;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostImageRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostLikeRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostNicknameRepository;
@@ -16,6 +13,7 @@ import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
+import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +21,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -64,17 +65,34 @@ public class CommunityPostService {
 
     }
 
+    @Transactional(readOnly = true)
     public Page<CommunityPostListResponse> getPostList(Pageable pageable) {
         Page<CommunityPost> posts = communityPostRepository.findAll(pageable);
-        return posts.map(post -> toListResponse(post));
+        List<CommunityPost> postList = posts.getContent();
+
+        Map<Long, List<CommunityPostLike>> likeMap = communityPostLikeRepository
+                .findByCommunityPostIn(postList)
+                .stream()
+                .collect(Collectors.groupingBy(pl -> pl.getCommunityPost().getId()));
+
+        Map<Long, String> nicknameMap = communityPostNicknameRepository
+                .findByCommunityPostIn(postList)
+                .stream()
+                .collect(Collectors.toMap(
+                        n -> n.getCommunityPost().getId(),
+                        CommunityPostNickname::getNickname
+                ));
+
+        return posts.map(post -> toListResponse(post, likeMap, nicknameMap));
     }
 
-    private CommunityPostListResponse toListResponse(CommunityPost post) {
-        String nickname = communityPostNicknameRepository.findByCommunityPost(post)
-                .map(CommunityPostNickname::getNickname)
-                .orElse("알 수 없음");
-        long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(post, LikeType.LIKE);
-        long dislikeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(post, LikeType.DISLIKE);
+    private CommunityPostListResponse toListResponse(CommunityPost post, Map<Long, List<CommunityPostLike>> likeMap, Map<Long, String> nicknameMap) {
+        String nickname = nicknameMap.getOrDefault(post.getId(), "Unknown");
+
+        long likeCount = likeMap.getOrDefault(post.getId(), List.of()).stream()
+                .filter(pl -> pl.getLikeType() == LikeType.LIKE).count();
+        long dislikeCount = likeMap.getOrDefault(post.getId(), List.of()).stream()
+                .filter(pl -> pl.getLikeType() == LikeType.DISLIKE).count();
 
         return CommunityPostListResponse.builder()
                 .title(post.getTitle())
@@ -85,7 +103,9 @@ public class CommunityPostService {
                 .build();
     }
 
+
     public CommunityPostResponse getCommunityPost(Long postId) {
+
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
@@ -112,4 +132,35 @@ public class CommunityPostService {
     }
 
 
+    public void togglePostLike(Long postId, LikeType likeType, CustomOAuth2User principal) {
+        User user = userRepository.findById(principal.getUser().getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        CommunityPost communityPost = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        Optional<CommunityPostLike> existing = communityPostLikeRepository.findByUserAndCommunityPost(user, communityPost);
+
+        if (existing.isPresent()) {
+            if (existing.get().getLikeType() == likeType) {
+                communityPostLikeRepository.delete(existing.get());
+            } else {
+                communityPostLikeRepository.delete(existing.get());
+                communityPostLikeRepository.save(
+                        CommunityPostLike.builder()
+                                .user(user)
+                                .communityPost(communityPost)
+                                .likeType(likeType)
+                                .build()
+                );
+            }
+        } else {
+            communityPostLikeRepository.save(
+                    CommunityPostLike.builder()
+                            .user(user)
+                            .communityPost(communityPost)
+                            .likeType(likeType)
+                            .build());
+        }
+    }
 }
