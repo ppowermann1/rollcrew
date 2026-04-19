@@ -38,9 +38,9 @@ public class CommunityPostService {
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostImageRepository communityPostImageRepository;
 
-    public Long createPost(Long userId, CommunityPostRequest request) {
+    public Long createPost(CustomOAuth2User principal, CommunityPostRequest request) {
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(principal.getUser().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost cratedPost = CommunityPost.builder()
@@ -131,6 +131,41 @@ public class CommunityPostService {
                 .build();
     }
 
+
+    public CommunityPostResponse updatePost(Long postId, CommunityPostRequest request, Long userId) {
+
+        CommunityPost communityPost = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        if (!communityPost.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        communityPost.updatePost(request.getTitle(), request.getContent());
+
+        CommunityPostNickname communityPostNickname = communityPostNicknameRepository
+                .findByCommunityPost(communityPost)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
+
+        return CommunityPostResponse.builder()
+                .title(communityPost.getTitle())
+                .nickname(communityPostNickname.getNickname())
+                .content(communityPost.getContent())
+                .createdAt(communityPost.getCreatedAt())
+                .build();
+    }
+
+    public void deletePost(Long postId, Long userId) {
+
+        CommunityPost communityPost = communityPostRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        if (!communityPost.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        communityPostRepository.delete(communityPost);
+    }
 
     public void togglePostLike(Long postId, LikeType likeType, CustomOAuth2User principal) {
         User user = userRepository.findById(principal.getUser().getId())

@@ -7,6 +7,7 @@ import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityPostService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
 import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +25,9 @@ public class CommunityPostController {
     private final CommunityPostService communityPostService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> createPost(@AuthenticationPrincipal Long userId,
+    public ResponseEntity<ApiResponse<Long>> createPost(@AuthenticationPrincipal CustomOAuth2User principal,
                                                         @RequestBody CommunityPostRequest request) {
-        Long response = communityPostService.createPost(userId, request);
+        Long response = communityPostService.createPost(principal, request);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -47,9 +48,28 @@ public class CommunityPostController {
 
     @PostMapping("/{postId}/like")
     public ResponseEntity<ApiResponse<Void>> togglePostLike(@PathVariable Long postId,
-                                                               @RequestParam LikeType likeType,
-                                                               @AuthenticationPrincipal CustomOAuth2User principal) {
+                                                            @RequestParam LikeType likeType,
+                                                            @AuthenticationPrincipal CustomOAuth2User principal) {
         communityPostService.togglePostLike(postId, likeType, principal);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PatchMapping("/{postId}")
+    public ResponseEntity<ApiResponse<CommunityPostResponse>> updatePost(
+            @PathVariable Long postId,
+            @RequestBody @Valid CommunityPostRequest request,
+            @AuthenticationPrincipal CustomOAuth2User principal) {
+
+        CommunityPostResponse response = communityPostService.updatePost(postId, request, principal.getUser().getId());
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal CustomOAuth2User principal) {
+
+        communityPostService.deletePost(postId, principal.getUser().getId());
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

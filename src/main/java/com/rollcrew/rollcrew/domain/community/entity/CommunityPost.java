@@ -10,6 +10,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -45,4 +47,24 @@ public class CommunityPost {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    public void updatePost(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    @Builder.Default
+    @OneToMany(mappedBy = "communityPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommunityPostNickname> nicknames = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "communityPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommunityPostLike> likes = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "communityPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommunityPostImage> images = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "communityPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommunityComment> comments = new ArrayList<>();
 }
