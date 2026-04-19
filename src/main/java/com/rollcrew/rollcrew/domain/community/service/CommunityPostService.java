@@ -13,7 +13,6 @@ import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,9 +37,9 @@ public class CommunityPostService {
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostImageRepository communityPostImageRepository;
 
-    public Long createPost(CustomOAuth2User principal, CommunityPostRequest request) {
+    public Long createPost(Long userId, CommunityPostRequest request) {
 
-        User user = userRepository.findById(principal.getUser().getId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost createdPost = CommunityPost.builder()
@@ -96,6 +95,7 @@ public class CommunityPostService {
                 .filter(pl -> pl.getLikeType() == LikeType.DISLIKE).count();
 
         return CommunityPostListResponse.builder()
+                .id(post.getId())
                 .title(post.getTitle())
                 .nickname(nickname)
                 .createdAt(post.getCreatedAt())
@@ -168,8 +168,8 @@ public class CommunityPostService {
         communityPostRepository.delete(communityPost);
     }
 
-    public void togglePostLike(Long postId, LikeType likeType, CustomOAuth2User principal) {
-        User user = userRepository.findById(principal.getUser().getId())
+    public void togglePostLike(Long postId, LikeType likeType, Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost communityPost = communityPostRepository.findById(postId)

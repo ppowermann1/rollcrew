@@ -6,7 +6,7 @@ import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
 import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityCommentService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
+import com.rollcrew.rollcrew.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,8 +28,8 @@ public class CommunityCommentController {
     @PostMapping("/{postId}")
     public ResponseEntity<ApiResponse<CommentResponse>> createComments(@PathVariable Long postId,
                                                                        @RequestBody CommentCreateRequest request,
-                                                                       @AuthenticationPrincipal CustomOAuth2User principal) {
-        CommentResponse response = communityCommentService.createComments(postId, request, principal);
+                                                                       @AuthenticationPrincipal Long userId) {
+        CommentResponse response = communityCommentService.createComments(postId, request, userId);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
@@ -44,23 +44,23 @@ public class CommunityCommentController {
     @PatchMapping("/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponse>> updateComment(@PathVariable Long commentId,
                                                                       @RequestBody @Valid CommentUpdateRequest request,
-                                                                      @AuthenticationPrincipal CustomOAuth2User principal) {
-        CommentResponse response = communityCommentService.updateComment(commentId, request, principal);
+                                                                      @AuthenticationPrincipal Long userId) {
+        CommentResponse response = communityCommentService.updateComment(commentId, request, userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId,
-                                                           @AuthenticationPrincipal CustomOAuth2User principal) {
-        communityCommentService.deleteComment(commentId, principal);
+                                                           @AuthenticationPrincipal Long userId) {
+        communityCommentService.deleteComment(commentId, userId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @PostMapping("/{commentId}/like")
     public ResponseEntity<ApiResponse<Void>> togglePostLike(@PathVariable Long commentId,
                                                                @RequestParam LikeType likeType,
-                                                               @AuthenticationPrincipal CustomOAuth2User principal) {
-        communityCommentService.toggleCommentLike(commentId, likeType, principal);
+                                                               @AuthenticationPrincipal Long userId) {
+        communityCommentService.toggleCommentLike(commentId, likeType, userId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CommunityPostListResponse {
 
+    private Long id;
     private String title;
     private String nickname;
     private LocalDateTime createdAt;

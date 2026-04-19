@@ -12,7 +12,6 @@ import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,10 +36,9 @@ public class CommunityCommentService {
     private final UserRepository userRepository;
     private final CommunityCommentLikeRepository communityCommentLikeRepository;
 
-    public CommentResponse createComments(Long postId, CommentCreateRequest request, CustomOAuth2User principal) {
+    public CommentResponse createComments(Long postId, CommentCreateRequest request, Long userId) {
 
-        Long id = principal.getUser().getId();
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
@@ -151,12 +149,12 @@ public class CommunityCommentService {
     }
 
 
-    public CommentResponse updateComment(Long commentId, @Valid CommentUpdateRequest request, CustomOAuth2User principal) {
+    public CommentResponse updateComment(Long commentId, @Valid CommentUpdateRequest request, Long userId) {
 
         CommunityComment communityComment = communityCommentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        User user = userRepository.findById(principal.getUser().getId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 
@@ -184,8 +182,8 @@ public class CommunityCommentService {
     }
 
     @Transactional
-    public void deleteComment(Long commentId, CustomOAuth2User principal) {
-        User user = userRepository.findById(principal.getUser().getId()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    public void deleteComment(Long commentId, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityComment comment = communityCommentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
@@ -198,9 +196,9 @@ public class CommunityCommentService {
     }
 
     @Transactional
-    public void toggleCommentLike(Long commentId, LikeType likeType, CustomOAuth2User principal) {
+    public void toggleCommentLike(Long commentId, LikeType likeType, Long userId) {
 
-        User user = userRepository.findById(principal.getUser().getId()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityComment communityComment = communityCommentRepository.findById(commentId).orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
