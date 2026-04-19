@@ -32,6 +32,10 @@ public class CommunityComment {
     @JoinColumn(name = "community_post_id", nullable = false)
     private CommunityPost communityPost;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private CommunityComment parent;
+
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
