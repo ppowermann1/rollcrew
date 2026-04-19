@@ -36,8 +36,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String token = jwtProvider.generateToken(userId, role);
         log.info("JWT: {}", token);
 
-        // 4. 응답 헤더에 JWT 담기
-        response.setHeader("Authorization", "Bearer " + token);
-        response.setStatus(HttpServletResponse.SC_OK);
+        //프론트로 redirect
+        String redirectUrl = "http://localhost:5173/oauth/callback?token=" + token;
+        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }
