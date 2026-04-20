@@ -1,9 +1,9 @@
 // CreateJobPage — 구인구직 작성
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
 import { IconBack } from '../components/common/Icons';
-import { createJobPosting } from '../api/jobApi';
+import { getJobPosting, updateJobPosting } from '../api/jobApi';
 import { useAuth } from '../context/AuthContext';
 
 const CATEGORIES = [
@@ -12,8 +12,9 @@ const CATEGORIES = [
   { id: 'ETC', label: '기타' },
 ];
 
-export default function CreateJobPage() {
+export default function UpdateJobPage() {
   const navigate = useNavigate();
+  const { jobId } = useParams();
   const { isAuthenticated } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -21,8 +22,39 @@ export default function CreateJobPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isRange, setIsRange] = useState(false);
+  const [status, setStatus] = useState('OPEN');
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const data = await getJobPosting(jobId);
+        setTitle(data.title);
+        setContent(data.content);
+        setCategory(data.category);
+        if (data.shootingDates) {
+          if (data.shootingDates.includes('~')) {
+            const dates = data.shootingDates.split(' ~ ');
+            setStartDate(dates[0] || '');
+            setEndDate(dates[1] || '');
+            setIsRange(true);
+          } else {
+            setStartDate(data.shootingDates);
+            setIsRange(false);
+          }
+        }
+        setStatus(data.status);
+      } catch (err) {
+        console.error('구인구직 로딩 실패:', err);
+        setError('게시글 정보를 불러올 수 없습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJob();
+  }, [jobId]);
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim() || !startDate || submitting) return;
@@ -36,16 +68,17 @@ export default function CreateJobPage() {
         finalDates = `${startDate} ~ ${endDate}`;
       }
 
-      await createJobPosting({
+      await updateJobPosting(jobId, {
         title: title.trim(),
         content: content.trim(),
         category,
         shootingDates: finalDates,
+        status, // 기존 상태 유지
       });
-      navigate('/');
+      navigate(`/jobs/${jobId}`, { replace: true });
     } catch (err) {
-      console.error('구인구직 작성 실패:', err);
-      setError('게시글 작성에 실패했습니다. 다시 시도해주세요.');
+      console.error('구인구직 수정 실패:', err);
+      setError('게시글 수정에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +94,7 @@ export default function CreateJobPage() {
         <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
-        }}>구인구직 등록</div>
+        }}>구인구직 수정</div>
         <button
           id="btn-submit-job"
           onClick={handleSubmit}
@@ -73,10 +106,12 @@ export default function CreateJobPage() {
             fontSize: 13, fontWeight: 700,
             transition: 'all var(--transition-fast)',
           }}
-        >{submitting ? '등록 중...' : '등록'}</button>
+        >{submitting ? '수정 중...' : '수정'}</button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        {loading && <div className="flex-center" style={{ padding: 40 }}><div className="spinner" /></div>}
+        
         {error && (
           <div style={{
             padding: '12px 14px', borderRadius: 10,

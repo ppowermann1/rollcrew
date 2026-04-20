@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
 import { IconBack, IconMore } from '../components/common/Icons';
-import { getJobPosting } from '../api/jobApi';
+import { getJobPosting, deleteJobPosting, updateJobPosting } from '../api/jobApi';
+import { useAuth } from '../context/AuthContext';
 
 const JOB_CATEGORIES = {
   FILMING:  { label: '촬영', hue: 300 },
@@ -14,9 +15,12 @@ const JOB_CATEGORIES = {
 export default function JobDetailPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showActionSheet, setShowActionSheet] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -61,6 +65,28 @@ export default function JobDetailPage() {
 
   const cat = JOB_CATEGORIES[job.category] || JOB_CATEGORIES.ETC;
   const isOpen = job.status === 'OPEN';
+  const isAuthor = user && user.id === job.userId;
+
+  const handleDelete = async () => {
+    if (!window.confirm('게시글을 완전히 삭제하시겠습니까?')) return;
+    try {
+      await deleteJobPosting(jobId);
+      navigate('/', { replace: true });
+    } catch (err) {
+      alert('삭제에 실패했습니다.');
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    const newStatus = isOpen ? 'CLOSED' : 'OPEN';
+    try {
+      await updateJobPosting(jobId, { ...job, status: newStatus });
+      setJob({ ...job, status: newStatus });
+      setShowActionSheet(false);
+    } catch (err) {
+      alert('상태 변경에 실패했습니다.');
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -75,7 +101,9 @@ export default function JobDetailPage() {
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>구인구직</div>
-        <IconBtn><IconMore size={20} /></IconBtn>
+        {isAuthor ? (
+          <IconBtn onClick={() => setShowActionSheet(true)}><IconMore size={20} /></IconBtn>
+        ) : <div style={{ width: 44 }} />}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 90 }}>
@@ -160,6 +188,44 @@ export default function JobDetailPage() {
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         >{isOpen ? '지원하기' : '마감된 공고입니다'}</button>
       </div>
+
+      {/* 액션 시트 모달 */}
+      {showActionSheet && (
+        <>
+          <div 
+            onClick={() => setShowActionSheet(false)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
+              zIndex: 100, backdropFilter: 'blur(2px)'
+            }} 
+          />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 480, background: 'var(--surface)',
+            borderTopLeftRadius: 20, borderTopRightRadius: 20,
+            padding: '24px 20px 40px', zIndex: 101,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 16 }}>게시글 관리</div>
+            <button
+              onClick={handleToggleStatus}
+              style={{ width: '100%', padding: '16px', background: 'var(--bg)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+            >{isOpen ? '마감하기' : '모집중으로 변경'}</button>
+            <button
+              onClick={() => navigate(`/jobs/${jobId}/edit`)}
+              style={{ width: '100%', padding: '16px', background: 'var(--bg)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+            >수정하기</button>
+            <button
+              onClick={handleDelete}
+              style={{ width: '100%', padding: '16px', background: 'rgba(255,107,107,0.1)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--danger)', marginBottom: 16, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+            >삭제하기</button>
+            <button
+              onClick={() => setShowActionSheet(false)}
+              style={{ width: '100%', padding: '16px', background: 'var(--text-faint)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+            >취소</button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

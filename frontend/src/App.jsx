@@ -8,6 +8,7 @@ import PostDetailPage from './pages/PostDetailPage';
 import JobDetailPage from './pages/JobDetailPage';
 import CreatePostPage from './pages/CreatePostPage';
 import CreateJobPage from './pages/CreateJobPage';
+import UpdateJobPage from './pages/UpdateJobPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
@@ -35,6 +36,9 @@ export default function App() {
             } />
             <Route path="/jobs/create" element={
               <div className="page-container"><div className="film-grain" /><CreateJobPage /></div>
+            } />
+            <Route path="/jobs/:jobId/edit" element={
+              <div className="page-container"><div className="film-grain" /><UpdateJobPage /></div>
             } />
             <Route path="/login" element={
               <div className="page-container"><div className="film-grain" /><LoginPage /></div>

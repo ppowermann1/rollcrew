@@ -159,6 +159,7 @@ export default function HomePage() {
       </div>
 
       {/* 피드 콘텐츠 */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80, position: 'relative' }}>
         {loading && (
           <div className="flex-center" style={{ padding: 40 }}>
             <div className="spinner" />
