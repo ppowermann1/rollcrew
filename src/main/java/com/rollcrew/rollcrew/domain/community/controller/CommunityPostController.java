@@ -72,4 +72,12 @@ public class CommunityPostController {
         communityPostService.deletePost(postId, userId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Page<CommunityPostListResponse>>> getMyPosts(
+            @AuthenticationPrincipal Long userId) {
+
+        Page<CommunityPostListResponse> responses = communityPostService.getMyPosts(userId);
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
 }

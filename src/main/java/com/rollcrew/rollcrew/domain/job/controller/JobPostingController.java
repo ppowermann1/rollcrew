@@ -52,4 +52,12 @@ public class JobPostingController {
         jobPostingService.deleteJobPosting(userId, jobPostId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<JobPostingResponse>>> getMyJobPostings(
+            @AuthenticationPrincipal Long userId) {
+
+        List<JobPostingResponse> responses = jobPostingService.getMyJobPostings(userId);
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
 }

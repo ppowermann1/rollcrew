@@ -10,6 +10,9 @@ import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +52,9 @@ public class JobPostingService {
 
     @Transactional(readOnly = true)
     public List<JobPostingResponse> getJobPostings() {
-        return jobPostRepository.findAll().stream()
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").descending());
+        return jobPostRepository.findAll(pageable)
+                .stream()
                 .map(JobPostingResponse::from)
                 .collect(Collectors.toList());
     }
@@ -77,5 +82,19 @@ public class JobPostingService {
         }
 
         jobPostRepository.delete(jobPost);
+    }
+
+    @Transactional(readOnly = true)
+    public List<JobPostingResponse> getMyJobPostings(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+
+        return jobPostRepository.findByUser(user, pageable)
+                .stream()
+                .map(JobPostingResponse::from)
+                .collect(Collectors.toList());
     }
 }

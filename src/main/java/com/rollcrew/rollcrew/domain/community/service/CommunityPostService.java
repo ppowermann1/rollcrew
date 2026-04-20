@@ -14,7 +14,9 @@ import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -198,5 +200,33 @@ public class CommunityPostService {
                             .likeType(likeType)
                             .build());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CommunityPostListResponse> getMyPosts(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+
+        Page<CommunityPost> posts = communityPostRepository.findByUser(user, pageable);
+        List<CommunityPost> postList = posts.getContent();
+
+        Map<Long, List<CommunityPostLike>> likeMap = communityPostLikeRepository
+                .findByCommunityPostIn(postList)
+                .stream()
+                .collect(Collectors.groupingBy(pl -> pl.getCommunityPost().getId()));
+
+        Map<Long, String> nicknameMap = communityPostNicknameRepository
+                .findByCommunityPostIn(postList)
+                .stream()
+                .collect(Collectors.toMap(
+                        n -> n.getCommunityPost().getId(),
+                        CommunityPostNickname::getNickname,
+                        (existing, replacement) -> existing
+                ));
+
+        return posts.map(post -> toListResponse(post, likeMap, nicknameMap));
     }
 }
