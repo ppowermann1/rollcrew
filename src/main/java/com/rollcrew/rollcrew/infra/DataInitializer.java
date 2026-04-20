@@ -78,7 +78,9 @@ public class DataInitializer implements ApplicationRunner {
         };
 
         for (int i = 0; i < commData.length; i++) {
-            User author = users[i % 4];
+            // 딱 15개는 로그인 유저(u1)에게 몰아주어 내 게시글 페이징 테스트가 가능하도록 설정
+            // 나머지 15개는 다른 유저(u2, u3, u4)에게 배배분하여 메인 홈 페이징 테스트가 가능하도록 설정
+            User author = (i < 15) ? u1 : users[(i % 3) + 1];
             String catStr = commData[i][0];
             String title = commData[i][1];
             String content = commData[i][2];
@@ -133,7 +135,9 @@ public class DataInitializer implements ApplicationRunner {
         };
 
         for (int i = 0; i < jobData.length; i++) {
-            User author = users[(i + 1) % 4];
+            // 딱 15개는 로그인 유저(u1)에게 몰아주어 내 게시글 페이징 테스트가 가능하도록 설정
+            // 나머지 15개는 다른 유저(u2, u3, u4)에게 배배분하여 메인 홈 페이징 테스트가 가능하도록 설정
+            User author = (i < 15) ? u1 : users[(i % 3) + 1];
             String catStr = jobData[i][0];
             String title = jobData[i][1];
             String content = jobData[i][2];
