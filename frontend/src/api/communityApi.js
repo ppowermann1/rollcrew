@@ -57,3 +57,11 @@ export const deletePost = async (postId) => {
   const res = await client.delete(`/api/community/posts/${postId}`);
   return res.data;
 };
+
+/**
+ * 내가 쓴 게시글 목록 조회 (페이지네이션)
+ */
+export const getMyPosts = async (page = 0, size = 20) => {
+  const res = await client.get('/api/community/posts/me', { params: { page, size } });
+  return res.data.data;
+};

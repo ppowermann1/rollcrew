@@ -2,11 +2,10 @@
 import client from './client';
 
 /**
- * 구인구직 목록 조회
- * @returns {Promise<JobPostingResponse[]>}
+ * 구인구직 목록 조회 (페이지네이션)
  */
-export const getJobPostings = async () => {
-  const res = await client.get('/api/job-postings');
+export const getJobPostings = async (page = 0, size = 20) => {
+  const res = await client.get('/api/job-postings', { params: { page, size } });
   return res.data.data;
 };
 
@@ -41,4 +40,12 @@ export const updateJobPosting = async (jobPostId, data) => {
 export const deleteJobPosting = async (jobPostId) => {
   const res = await client.delete(`/api/job-postings/${jobPostId}`);
   return res.data;
+};
+
+/**
+ * 내가 쓴 구인구직 목록 조회 (페이지네이션)
+ */
+export const getMyJobPostings = async (page = 0, size = 10) => {
+  const res = await client.get('/api/job-postings/me', { params: { page, size } });
+  return res.data.data;
 };

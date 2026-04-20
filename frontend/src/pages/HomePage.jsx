@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import FeedItem from '../components/community/FeedItem';
 import JobRow from '../components/job/JobRow';
+import Pagination from '../components/common/Pagination';
 import { IconPlus } from '../components/common/Icons';
 import { getPosts } from '../api/communityApi';
 import { getJobPostings } from '../api/jobApi';
@@ -30,6 +31,11 @@ export default function HomePage() {
   const [activeCat, setActiveCat] = useState('ALL');
   const [activeJobCat, setActiveJobCat] = useState('ALL');
 
+  const [commPage, setCommPage] = useState(0);
+  const [commTotal, setCommTotal] = useState(1);
+  const [jobPage, setJobPage] = useState(0);
+  const [jobTotal, setJobTotal] = useState(1);
+
   const [posts, setPosts] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +46,13 @@ export default function HomePage() {
     setError(null);
     try {
       if (tab === 'community') {
-        const data = await getPosts(0, 20);
-        // data는 Page 객체 또는 배열
+        const data = await getPosts(commPage, 20);
         setPosts(data.content || data || []);
+        setCommTotal(data.totalPages || 1);
       } else {
-        const data = await getJobPostings();
-        setJobs(data || []);
+        const data = await getJobPostings(jobPage, 20);
+        setJobs(data.content || data || []);
+        setJobTotal(data.totalPages || 1);
       }
     } catch (err) {
       console.error('데이터 로딩 실패:', err);
@@ -59,7 +66,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [tab]);
+  }, [tab, commPage, jobPage]);
 
   useEffect(() => {
     fetchData();
@@ -213,6 +220,14 @@ export default function HomePage() {
           {!loading && !error && tab === 'job' && filteredJobs.map(j => (
             <JobRow key={j.id} job={j} onClick={handleOpenJob} />
           ))}
+          
+          {!loading && !error && tab === 'community' && posts.length > 0 && (
+            <Pagination currentPage={commPage} totalPages={commTotal} onPageChange={setCommPage} />
+          )}
+
+          {!loading && !error && tab === 'job' && jobs.length > 0 && (
+            <Pagination currentPage={jobPage} totalPages={jobTotal} onPageChange={setJobPage} />
+          )}
         </div>
 
         {/* 비로그인 유저 전용 블러 오버레이 & 로그인 유도 (Paywall 레이어) */}

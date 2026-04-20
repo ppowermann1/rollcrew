@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/common/Avatar';
 import Header from '../components/layout/Header';
-import { IconLogout } from '../components/common/Icons';
+import { IconLogout, IconBack } from '../components/common/Icons';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -68,27 +68,20 @@ export default function ProfilePage() {
             background: 'var(--bg-elevated)', borderRadius: 12,
             border: '1px solid var(--border)', overflow: 'hidden',
           }}>
-            {[
-              { label: '내 게시글', icon: '📝', note: '곧 출시 예정' },
-              { label: '내 댓글', icon: '💬', note: '곧 출시 예정' },
-              { label: '좋아요한 글', icon: '👍', note: '곧 출시 예정' },
-            ].map((item, i) => (
-              <div key={i} style={{
+            <div
+              onClick={() => navigate('/profile/posts')}
+              style={{
                 padding: '14px 16px',
-                borderBottom: i < 2 ? '1px solid var(--border)' : 'none',
                 display: 'flex', alignItems: 'center', gap: 10,
                 cursor: 'pointer',
-              }}>
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                  {item.label}
-                </span>
-                <span style={{
-                  fontSize: 11, color: 'var(--text-faint)',
-                  fontFamily: 'var(--font-mono)',
-                }}>{item.note}</span>
-              </div>
-            ))}
+              }}
+            >
+              <span style={{ fontSize: 18 }}>📝</span>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+                내 게시글
+              </span>
+              <IconBack size={16} color="var(--text-faint)" style={{ transform: 'rotate(180deg)' }} />
+            </div>
           </div>
         </div>
 

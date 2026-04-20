@@ -12,6 +12,7 @@ import UpdateJobPage from './pages/UpdateJobPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
+import MyPostsPage from './pages/MyPostsPage';
 
 export default function App() {
   return (
@@ -43,6 +44,11 @@ export default function App() {
             <Route path="/login" element={
               <div className="page-container"><div className="film-grain" /><LoginPage /></div>
             } />
+            {/* 프로필 */}
+            <Route path="/profile" element={<div className="page-container"><div className="film-grain" /><ProfilePage /></div>} />
+            <Route path="/profile/posts" element={<div className="page-container"><div className="film-grain" /><MyPostsPage /></div>} />
+
+            {/* 커뮤니티 */}
           </Routes>
         </AuthProvider>
       </ThemeProvider>
