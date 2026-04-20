@@ -13,17 +13,15 @@ import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -203,14 +201,13 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CommunityPostListResponse> getMyPosts(Long userId) {
+    public Page<CommunityPostListResponse> getMyPosts(Long userId, Pageable pageable) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
-
         Page<CommunityPost> posts = communityPostRepository.findByUser(user, pageable);
+
         List<CommunityPost> postList = posts.getContent();
 
         Map<Long, List<CommunityPostLike>> likeMap = communityPostLikeRepository

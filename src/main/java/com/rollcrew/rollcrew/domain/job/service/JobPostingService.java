@@ -10,6 +10,7 @@ import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -50,13 +51,9 @@ public class JobPostingService {
         return JobPostingResponse.from(jobPost);
     }
 
-    @Transactional(readOnly = true)
-    public List<JobPostingResponse> getJobPostings() {
-        Pageable pageable = PageRequest.of(0, 20, Sort.by("createdAt").descending());
+    public Page<JobPostingResponse> getJobPostings(Pageable pageable) {
         return jobPostRepository.findAll(pageable)
-                .stream()
-                .map(JobPostingResponse::from)
-                .collect(Collectors.toList());
+                .map(JobPostingResponse::from);
     }
 
     public JobPostingResponse updateJobPosting(Long userId, Long jobPostId, JobPostingUpdateRequest request) {
@@ -85,16 +82,12 @@ public class JobPostingService {
     }
 
     @Transactional(readOnly = true)
-    public List<JobPostingResponse> getMyJobPostings(Long userId) {
+    public Page<JobPostingResponse> getMyJobPostings(Long userId, Pageable pageable) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
-
         return jobPostRepository.findByUser(user, pageable)
-                .stream()
-                .map(JobPostingResponse::from)
-                .collect(Collectors.toList());
+                .map(JobPostingResponse::from);
     }
 }

@@ -6,7 +6,6 @@ import com.rollcrew.rollcrew.domain.community.dto.CommunityPostResponse;
 import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityPostService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
-import com.rollcrew.rollcrew.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -75,9 +74,10 @@ public class CommunityPostController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<Page<CommunityPostListResponse>>> getMyPosts(
-            @AuthenticationPrincipal Long userId) {
+            @AuthenticationPrincipal Long userId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Page<CommunityPostListResponse> responses = communityPostService.getMyPosts(userId);
+        Page<CommunityPostListResponse> responses = communityPostService.getMyPosts(userId, pageable);
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 }

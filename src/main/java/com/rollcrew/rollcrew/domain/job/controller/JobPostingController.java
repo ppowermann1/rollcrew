@@ -6,6 +6,10 @@ import com.rollcrew.rollcrew.domain.job.dto.JobPostingUpdateRequest;
 import com.rollcrew.rollcrew.domain.job.service.JobPostingService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +31,9 @@ public class JobPostingController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<JobPostingResponse>>> getJobPostings() {
-        List<JobPostingResponse> response = jobPostingService.getJobPostings();
+    public ResponseEntity<ApiResponse<Page<JobPostingResponse>>> getJobPostings(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<JobPostingResponse> response = jobPostingService.getJobPostings(pageable);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -54,10 +59,11 @@ public class JobPostingController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<List<JobPostingResponse>>> getMyJobPostings(
-            @AuthenticationPrincipal Long userId) {
+    public ResponseEntity<ApiResponse<Page<JobPostingResponse>>> getMyJobPostings(
+            @AuthenticationPrincipal Long userId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        List<JobPostingResponse> responses = jobPostingService.getMyJobPostings(userId);
+        Page<JobPostingResponse> responses = jobPostingService.getMyJobPostings(userId, pageable);
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 }
