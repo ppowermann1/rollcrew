@@ -159,7 +159,6 @@ export default function HomePage() {
       </div>
 
       {/* 피드 콘텐츠 */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80 }}>
         {loading && (
           <div className="flex-center" style={{ padding: 40 }}>
             <div className="spinner" />
@@ -183,30 +182,83 @@ export default function HomePage() {
           </div>
         )}
 
-        {!loading && !error && tab === 'community' && posts.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">📝</div>
-            <div>아직 게시글이 없습니다</div>
-            <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
-              첫 번째 글을 작성해보세요!
+        <div style={{
+          filter: !isAuthenticated && !loading ? 'blur(6px)' : 'none',
+          pointerEvents: !isAuthenticated ? 'none' : 'auto',
+          userSelect: !isAuthenticated ? 'none' : 'auto'
+        }}>
+          {!loading && !error && tab === 'community' && posts.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">📝</div>
+              <div>아직 게시글이 없습니다</div>
+              <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
+                첫 번째 글을 작성해보세요!
+              </div>
             </div>
+          )}
+
+          {!loading && !error && tab === 'community' && posts.map((p, i) => (
+            <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} />
+          ))}
+
+          {!loading && !error && tab === 'job' && filteredJobs.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">🎬</div>
+              <div>구인구직 게시글이 없습니다</div>
+            </div>
+          )}
+
+          {!loading && !error && tab === 'job' && filteredJobs.map(j => (
+            <JobRow key={j.id} job={j} onClick={handleOpenJob} />
+          ))}
+        </div>
+
+        {/* 비로그인 유저 전용 블러 오버레이 & 로그인 유도 (Paywall 레이어) */}
+        {!isAuthenticated && !loading && !error && (
+          <div style={{
+            position: 'absolute',
+            top: '15%',
+            left: 20, right: 20,
+            background: 'rgba(30, 30, 30, 0.75)',
+            backdropFilter: 'blur(12px)',
+            padding: '30px 20px',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            zIndex: 10,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: 'var(--text)', wordBreak: 'keep-all' }}>
+              로그인이 필요한 서비스입니다.
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 24, wordBreak: 'keep-all' }}>
+              롤크루의 현직 영상인들과 소통하려면<br />카카오로 시작해보세요!
+            </p>
+            <button
+              onClick={() => {
+                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+                window.location.href = `${baseUrl}/oauth2/authorization/kakao`;
+              }}
+              style={{
+                background: '#FEE500', color: '#191919',
+                border: 'none', padding: '14px 24px', borderRadius: 12,
+                fontSize: 15, fontWeight: 800, width: '100%',
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                boxShadow: '0 4px 10px rgba(254, 229, 0, 0.2)'
+              }}
+            >
+              <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor">
+                <path d="M12 3C6.477 3 2 6.556 2 10.944c0 2.822 1.83 5.3 4.673 6.64-.176.621-.634 2.222-.646 2.274-.015.068.03.136.088.136h.02c.045 0 .864-.114 2.05-.623.593.178 1.22.272 1.815.272 5.523 0 10-3.556 10-7.944C24 6.556 19.523 3 12 3z"/>
+              </svg>
+              카카오로 1초 만에 시작하기
+            </button>
           </div>
         )}
-
-        {!loading && !error && tab === 'community' && posts.map((p, i) => (
-          <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} />
-        ))}
-
-        {!loading && !error && tab === 'job' && filteredJobs.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">🎬</div>
-            <div>구인구직 게시글이 없습니다</div>
-          </div>
-        )}
-
-        {!loading && !error && tab === 'job' && filteredJobs.map(j => (
-          <JobRow key={j.id} job={j} onClick={handleOpenJob} />
-        ))}
       </div>
 
       {/* FAB 버튼 */}

@@ -225,7 +225,6 @@ class CommunityPostControllerTest {
     @Test
     @DisplayName("게시글 좋아요 토글 성공 - 200")
     void togglePostLike_success() throws Exception {
-        doNothing().when(communityPostService).togglePostLike(eq(1L), eq(LikeType.LIKE), any(Long.class));
 
         mockMvc.perform(post("/api/community/posts/1/like")
                         .with(authentication(auth))
@@ -237,7 +236,6 @@ class CommunityPostControllerTest {
     @Test
     @DisplayName("게시글 싫어요 토글 성공 - 200")
     void togglePostDislike_success() throws Exception {
-        doNothing().when(communityPostService).togglePostLike(eq(1L), eq(LikeType.DISLIKE), any(Long.class));
 
         mockMvc.perform(post("/api/community/posts/1/like")
                         .with(authentication(auth))

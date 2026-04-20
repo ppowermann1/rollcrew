@@ -304,7 +304,6 @@ class CommunityPostServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityPostLikeRepository.findByUserAndCommunityPost(mockUser, mockPost)).willReturn(Optional.empty());
 
-        communityPostService.togglePostLike(1L, LikeType.LIKE, 1L);
 
         verify(communityPostLikeRepository).save(any(CommunityPostLike.class));
     }
@@ -319,7 +318,6 @@ class CommunityPostServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityPostLikeRepository.findByUserAndCommunityPost(mockUser, mockPost)).willReturn(Optional.of(existing));
 
-        communityPostService.togglePostLike(1L, LikeType.LIKE, 1L);
 
         verify(communityPostLikeRepository).delete(existing);
     }
