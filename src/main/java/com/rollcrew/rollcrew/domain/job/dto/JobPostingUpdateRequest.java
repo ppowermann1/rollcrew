@@ -3,9 +3,11 @@ package com.rollcrew.rollcrew.domain.job.dto;
 import com.rollcrew.rollcrew.domain.job.entity.JobCategory;
 import com.rollcrew.rollcrew.domain.job.entity.PostStatus;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class JobPostingUpdateRequest {
 
