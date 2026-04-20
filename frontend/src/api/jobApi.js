@@ -49,3 +49,36 @@ export const getMyJobPostings = async (page = 0, size = 10) => {
   const res = await client.get('/api/job-postings/me', { params: { page, size } });
   return res.data.data;
 };
+
+/**
+ * 지원하기
+ * body: { message }
+ */
+export const createApply = async (jobPostId, message) => {
+  const res = await client.post(`/api/job-postings/${jobPostId}/applies`, { message });
+  return res.data.data;
+};
+
+/**
+ * 지원자 목록 조회 (작성자 전용)
+ */
+export const getApplies = async (jobPostId) => {
+  const res = await client.get(`/api/job-postings/${jobPostId}/applies`);
+  return res.data.data;
+};
+
+/**
+ * 지원 수락/거절 (작성자 전용)
+ * status: 'ACCEPTED' | 'REJECTED'
+ */
+export const updateApplyStatus = async (applyId, status) => {
+  const res = await client.patch(`/api/applies/${applyId}/status`, { status });
+  return res.data.data;
+};
+
+/**
+ * 지원 취소 (지원자 본인)
+ */
+export const cancelApply = async (applyId) => {
+  await client.delete(`/api/applies/${applyId}`);
+};

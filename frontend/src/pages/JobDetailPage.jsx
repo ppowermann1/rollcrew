@@ -1,9 +1,9 @@
 // JobDetailPage — 구인구직 상세 화면
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
 import { IconBack, IconMore } from '../components/common/Icons';
-import { getJobPosting, deleteJobPosting, updateJobPosting } from '../api/jobApi';
+import { getJobPosting, deleteJobPosting, updateJobPosting, createApply, getApplies, updateApplyStatus, cancelApply } from '../api/jobApi';
 import { useAuth } from '../context/AuthContext';
 
 const JOB_CATEGORIES = {
@@ -13,15 +13,34 @@ const JOB_CATEGORIES = {
   ETC:      { label: '기타', hue: 155 },
 };
 
+const STATUS_STYLE = {
+  ACCEPTED: { bg: 'rgba(91,212,166,0.13)', color: 'var(--success)', label: '수락' },
+  REJECTED: { bg: 'rgba(255,107,107,0.1)',  color: 'var(--danger)',  label: '거절' },
+  PENDING:  { bg: 'var(--surface)',          color: 'var(--text-muted)', label: '검토중' },
+};
+
 export default function JobDetailPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showActionSheet, setShowActionSheet] = useState(false);
+
+  // 지원 관련 (일반 유저)
+  const [showApplySheet, setShowApplySheet] = useState(false);
+  const [applyMessage, setApplyMessage] = useState('');
+  const [applying, setApplying] = useState(false);
+  const [myApply, setMyApply] = useState(null);
+  const [toast, setToast] = useState('');
+
+  // 지원자 목록 (작성자 — 인라인)
+  const [applicants, setApplicants] = useState([]);
+  const [applicantsLoading, setApplicantsLoading] = useState(false);
+
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -39,6 +58,78 @@ export default function JobDetailPage() {
     fetchJob();
   }, [jobId]);
 
+  // 작성자일 때 지원자 목록 자동 로딩
+  useEffect(() => {
+    if (!job || !user || user.id !== job.userId) return;
+    setApplicantsLoading(true);
+    getApplies(jobId)
+      .then(setApplicants)
+      .catch(() => {/* 무시 */})
+      .finally(() => setApplicantsLoading(false));
+  }, [job, user, jobId]);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
+
+  const handleApply = async () => {
+    if (applying) return;
+    setApplying(true);
+    try {
+      const result = await createApply(jobId, applyMessage.trim());
+      setMyApply(result);
+      setShowApplySheet(false);
+      setApplyMessage('');
+      showToast('지원이 완료되었습니다 ✓');
+    } catch (err) {
+      showToast(err?.response?.data?.message || '지원에 실패했습니다.');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleCancelApply = async () => {
+    if (!myApply || !window.confirm('지원을 취소하시겠습니까?')) return;
+    try {
+      await cancelApply(myApply.applyId);
+      setMyApply(null);
+      showToast('지원이 취소되었습니다');
+    } catch {
+      showToast('지원 취소에 실패했습니다.');
+    }
+  };
+
+  const handleApplyStatus = async (applyId, status) => {
+    try {
+      const updated = await updateApplyStatus(applyId, status);
+      setApplicants(prev => prev.map(a => a.applyId === applyId ? updated : a));
+    } catch {
+      showToast('상태 변경에 실패했습니다.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('게시글을 완전히 삭제하시겠습니까?')) return;
+    try {
+      await deleteJobPosting(jobId);
+      navigate('/', { replace: true });
+    } catch {
+      alert('삭제에 실패했습니다.');
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    const newStatus = job.status === 'OPEN' ? 'CLOSED' : 'OPEN';
+    try {
+      await updateJobPosting(jobId, { ...job, status: newStatus });
+      setJob({ ...job, status: newStatus });
+      setShowActionSheet(false);
+    } catch {
+      alert('상태 변경에 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -50,10 +141,7 @@ export default function JobDetailPage() {
   if (error || !job) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', padding: '10px 16px',
-          borderBottom: '1px solid var(--border)',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
           <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
         </div>
         <div className="empty-state">
@@ -68,49 +156,28 @@ export default function JobDetailPage() {
   const isOpen = job.status === 'OPEN';
   const isAuthor = user && user.id === job.userId;
 
-  const handleDelete = async () => {
-    if (!window.confirm('게시글을 완전히 삭제하시겠습니까?')) return;
-    try {
-      await deleteJobPosting(jobId);
-      navigate('/', { replace: true });
-    } catch (err) {
-      alert('삭제에 실패했습니다.');
-    }
-  };
-
-  const handleToggleStatus = async () => {
-    const newStatus = isOpen ? 'CLOSED' : 'OPEN';
-    try {
-      await updateJobPosting(jobId, { ...job, status: newStatus });
-      setJob({ ...job, status: newStatus });
-      setShowActionSheet(false);
-    } catch (err) {
-      alert('상태 변경에 실패했습니다.');
-    }
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+
       {/* 상단 nav */}
       <div style={{
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)',
-        background: 'var(--bg)',
-        position: 'sticky', top: 0, zIndex: 50,
+        background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 50,
       }}>
         <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
-        <div style={{
-          flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
-        }}>구인구직</div>
-        {isAuthor ? (
-          <IconBtn onClick={() => setShowActionSheet(true)}><IconMore size={20} /></IconBtn>
-        ) : <div style={{ width: 44 }} />}
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>구인구직</div>
+        {isAuthor
+          ? <IconBtn onClick={() => setShowActionSheet(true)}><IconMore size={20} /></IconBtn>
+          : <div style={{ width: 44 }} />
+        }
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 90 }}>
-        {/* 헤더 정보 */}
+      {/* 스크롤 영역 */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: isAuthor ? 24 : 90 }}>
+
+        {/* 헤더 */}
         <div style={{ padding: '20px 20px 18px', borderBottom: '1px solid var(--border)' }}>
-          {/* 상태 배지 */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
             <div style={{
               padding: '4px 10px', borderRadius: 6,
@@ -131,7 +198,6 @@ export default function JobDetailPage() {
             lineHeight: 1.35, letterSpacing: -0.5, color: 'var(--text)',
           }}>{job.title}</h1>
 
-          {/* 촬영일 */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
             background: 'var(--bg-sunken)', borderRadius: 10,
@@ -139,9 +205,7 @@ export default function JobDetailPage() {
             <div style={{ fontSize: 20 }}>📅</div>
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>촬영 일정</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
-                {job.shootingDates}
-              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{job.shootingDates}</div>
             </div>
           </div>
         </div>
@@ -154,51 +218,207 @@ export default function JobDetailPage() {
           }}>{job.content}</p>
         </div>
 
-        {/* 지원하기 안내 */}
-        <div style={{ padding: '18px 20px' }}>
-          <div style={{
-            padding: '14px 16px', borderRadius: 12,
-            background: 'var(--bg-sunken)', border: '1px solid var(--border)',
-            fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6,
-          }}>
-            <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>지원 방법</div>
-            DM 또는 댓글로 포트폴리오와 간단한 소개를 남겨주세요.
+        {/* 지원 방법 안내 (비작성자만) */}
+        {!isAuthor && (
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{
+              padding: '14px 16px', borderRadius: 12,
+              background: 'var(--bg-sunken)', border: '1px solid var(--border)',
+              fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6,
+            }}>
+              <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>지원 방법</div>
+              아래 지원하기 버튼을 눌러 메시지와 함께 지원해주세요.
+            </div>
           </div>
+        )}
+
+        {/* ── 지원자 목록 인라인 (작성자 전용) ── */}
+        {isAuthor && (
+          <div style={{ padding: '20px 20px 8px' }}>
+
+            {/* 섹션 헤더 */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', letterSpacing: -0.3 }}>
+                지원자
+              </span>
+              {!applicantsLoading && (
+                <span style={{
+                  minWidth: 20, height: 20, borderRadius: 10,
+                  background: applicants.length > 0 ? 'var(--accent)' : 'var(--surface)',
+                  color: applicants.length > 0 ? 'var(--accent-ink)' : 'var(--text-muted)',
+                  fontSize: 11, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 6px',
+                }}>{applicants.length}</span>
+              )}
+            </div>
+
+            {/* 로딩 */}
+            {applicantsLoading && (
+              <div className="flex-center" style={{ height: 72 }}>
+                <div className="spinner" />
+              </div>
+            )}
+
+            {/* 없을 때 */}
+            {!applicantsLoading && applicants.length === 0 && (
+              <div style={{
+                padding: '24px 0', textAlign: 'center',
+                color: 'var(--text-faint)', fontSize: 13,
+                background: 'var(--bg-sunken)', borderRadius: 12,
+              }}>
+                아직 지원자가 없습니다
+              </div>
+            )}
+
+            {/* 지원자 카드 목록 */}
+            {!applicantsLoading && applicants.map(a => {
+              const st = STATUS_STYLE[a.status] || STATUS_STYLE.PENDING;
+              return (
+                <div key={a.applyId} style={{
+                  padding: '14px 16px',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 14,
+                  marginBottom: 8,
+                }}>
+                  {/* 닉네임 + 상태 배지 */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: a.message ? 8 : (a.status === 'PENDING' ? 10 : 0) }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{a.applicantNickname}</span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
+                      background: st.bg, color: st.color,
+                    }}>{st.label}</span>
+                  </div>
+
+                  {/* 메시지 */}
+                  {a.message && (
+                    <p style={{
+                      margin: `0 0 ${a.status === 'PENDING' ? 10 : 0}px`,
+                      fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55,
+                    }}>{a.message}</p>
+                  )}
+
+                  {/* 수락/거절 버튼 — PENDING일 때만 */}
+                  {a.status === 'PENDING' && (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleApplyStatus(a.applyId, 'ACCEPTED')}
+                        style={{
+                          flex: 1, height: 36, borderRadius: 8, border: 'none',
+                          background: 'rgba(91,212,166,0.13)', color: 'var(--success)',
+                          fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                        }}
+                      >수락</button>
+                      <button
+                        onClick={() => handleApplyStatus(a.applyId, 'REJECTED')}
+                        style={{
+                          flex: 1, height: 36, borderRadius: 8, border: 'none',
+                          background: 'rgba(255,107,107,0.1)', color: 'var(--danger)',
+                          fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                        }}
+                      >거절</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+      </div>
+
+      {/* 하단 지원하기 버튼 (비작성자) */}
+      {!isAuthor && (
+        <div style={{
+          padding: '12px 16px', borderTop: '1px solid var(--border)',
+          background: 'var(--bg)',
+          position: 'fixed', bottom: 0,
+          left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 480,
+        }}>
+          {myApply ? (
+            <button
+              onClick={handleCancelApply}
+              style={{
+                width: '100%', height: 50, borderRadius: 12,
+                border: '1.5px solid var(--border)', background: 'transparent',
+                color: 'var(--text-muted)', fontSize: 15, fontWeight: 800,
+                cursor: 'pointer', fontFamily: 'var(--font-sans)', letterSpacing: -0.3,
+              }}
+            >지원 취소</button>
+          ) : (
+            <button
+              onClick={() => isOpen && setShowApplySheet(true)}
+              style={{
+                width: '100%', height: 50, borderRadius: 12, border: 'none',
+                background: isOpen ? 'var(--accent)' : 'var(--surface)',
+                color: isOpen ? 'var(--accent-ink)' : 'var(--text-muted)',
+                fontSize: 15, fontWeight: 800, cursor: isOpen ? 'pointer' : 'default',
+                fontFamily: 'var(--font-sans)', letterSpacing: -0.3,
+                transition: 'transform var(--transition-fast)',
+              }}
+              onMouseEnter={e => isOpen && (e.currentTarget.style.transform = 'scale(1.02)')}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >{isOpen ? '지원하기' : '마감된 공고입니다'}</button>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* 지원하기 버튼 */}
-      <div style={{
-        padding: '12px 16px', borderTop: '1px solid var(--border)',
-        background: 'var(--bg)',
-        position: 'fixed', bottom: 0,
-        left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 480,
-      }}>
-        <button
-          id="btn-apply"
-          style={{
-            width: '100%', height: 50, borderRadius: 12, border: 'none',
-            background: isOpen ? 'var(--accent)' : 'var(--surface)',
-            color: isOpen ? 'var(--accent-ink)' : 'var(--text-muted)',
-            fontSize: 15, fontWeight: 800, cursor: isOpen ? 'pointer' : 'default',
-            fontFamily: 'var(--font-sans)', letterSpacing: -0.3,
-            transition: 'transform var(--transition-fast)',
-          }}
-          onMouseEnter={e => isOpen && (e.currentTarget.style.transform = 'scale(1.02)')}
-          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-        >{isOpen ? '지원하기' : '마감된 공고입니다'}</button>
-      </div>
+      {/* 토스트 */}
+      {toast && <div className="toast">{toast}</div>}
 
-      {/* 액션 시트 모달 */}
+      {/* 지원하기 바텀시트 */}
+      {showApplySheet && (
+        <>
+          <div
+            onClick={() => { setShowApplySheet(false); setApplyMessage(''); }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(2px)' }}
+          />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 480, background: 'var(--surface)',
+            borderTopLeftRadius: 20, borderTopRightRadius: 20,
+            padding: '24px 20px 40px', zIndex: 101,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 16 }}>지원 메시지</div>
+            <textarea
+              ref={textareaRef}
+              value={applyMessage}
+              onChange={e => setApplyMessage(e.target.value)}
+              placeholder="포트폴리오 링크나 간단한 소개를 입력해주세요 (선택)"
+              style={{
+                width: '100%', minHeight: 120, padding: '14px',
+                background: 'var(--bg)', border: '1px solid var(--border)',
+                borderRadius: 12, fontSize: 14, color: 'var(--text)',
+                lineHeight: 1.6, resize: 'none', fontFamily: 'var(--font-sans)',
+                marginBottom: 12,
+              }}
+            />
+            <button
+              onClick={handleApply}
+              disabled={applying}
+              style={{
+                width: '100%', height: 50, borderRadius: 12, border: 'none',
+                background: applying ? 'var(--surface)' : 'var(--accent)',
+                color: applying ? 'var(--text-muted)' : 'var(--accent-ink)',
+                fontSize: 15, fontWeight: 800, cursor: applying ? 'default' : 'pointer',
+                fontFamily: 'var(--font-sans)', letterSpacing: -0.3,
+              }}
+            >{applying ? '지원 중...' : '지원하기'}</button>
+          </div>
+        </>
+      )}
+
+      {/* 액션시트 (작성자 전용 — 마감/수정/삭제) */}
       {showActionSheet && (
         <>
-          <div 
+          <div
             onClick={() => setShowActionSheet(false)}
-            style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
-              zIndex: 100, backdropFilter: 'blur(2px)'
-            }} 
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(2px)' }}
           />
           <div style={{
             position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
