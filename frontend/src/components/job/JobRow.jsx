@@ -33,20 +33,27 @@ export default function JobRow({ job, onClick }) {
           color: isOpen ? 'var(--success)' : 'var(--text-faint)',
         }}>{isOpen ? '모집중' : '마감'}</span>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
-          {job.shootingDates}
+        <span style={{ 
+          fontSize: 12, 
+          fontWeight: 700, 
+          color: 'var(--text)',
+          letterSpacing: 0.5 
+        }}>
+          🗓 {job.shootingDates}
         </span>
       </div>
 
       <div style={{
         fontSize: 15, fontWeight: 700, lineHeight: 1.4,
         letterSpacing: -0.3, color: 'var(--text)', marginBottom: 5,
+        textDecoration: isOpen ? 'none' : 'line-through',
       }}>{job.title}</div>
 
       <div style={{
         fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55,
         display: '-webkit-box', WebkitLineClamp: 2,
         WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        textDecoration: isOpen ? 'none' : 'line-through',
       }}>{job.content}</div>
     </div>
   );
