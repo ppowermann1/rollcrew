@@ -1,4 +1,4 @@
-// CreateJobPage — 구인구직 작성
+// UpdateJobPage — 구인구직 수정
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 const CATEGORIES = [
   { id: 'FILMING', label: '촬영' },
   { id: 'LIGHTING', label: '조명' },
+  { id: 'DIRECTING', label: '연출' },
   { id: 'ETC', label: '기타' },
 ];
 
@@ -16,13 +17,16 @@ export default function UpdateJobPage() {
   const navigate = useNavigate();
   const { jobId } = useParams();
   const { isAuthenticated } = useAuth();
+  
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('FILMING');
-  const [startDate, setStartDate] = useState('');
+  
+  const [dates, setDates] = useState(['']);
   const [endDate, setEndDate] = useState('');
   const [isRange, setIsRange] = useState(false);
   const [status, setStatus] = useState('OPEN');
+  
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,14 +38,16 @@ export default function UpdateJobPage() {
         setTitle(data.title);
         setContent(data.content);
         setCategory(data.category);
+        
         if (data.shootingDates) {
           if (data.shootingDates.includes('~')) {
-            const dates = data.shootingDates.split(' ~ ');
-            setStartDate(dates[0] || '');
-            setEndDate(dates[1] || '');
+            const splitted = data.shootingDates.split(' ~ ');
+            setDates([splitted[0] || '']);
+            setEndDate(splitted[1] || '');
             setIsRange(true);
           } else {
-            setStartDate(data.shootingDates);
+            const splitted = data.shootingDates.split(', ');
+            setDates(splitted.length > 0 ? splitted : ['']);
             setIsRange(false);
           }
         }
@@ -56,16 +62,38 @@ export default function UpdateJobPage() {
     fetchJob();
   }, [jobId]);
 
+  const hasValidDate = isRange ? (dates[0] && endDate) : dates.some(d => d.trim() !== '');
+
+  const addDate = () => {
+    if (dates.length < 5) setDates([...dates, '']);
+  };
+
+  const removeDate = (idx) => {
+    if (dates.length > 1) {
+      setDates(dates.filter((_, i) => i !== idx));
+    } else {
+      setDates(['']);
+    }
+  };
+
+  const updateDate = (idx, value) => {
+    const newDates = [...dates];
+    newDates[idx] = value;
+    setDates(newDates);
+  };
+
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim() || !startDate || submitting) return;
+    if (!title.trim() || !content.trim() || !hasValidDate || submitting) return;
     if (!isAuthenticated) { navigate('/login'); return; }
 
     setSubmitting(true);
     setError(null);
     try {
-      let finalDates = startDate;
-      if (isRange && endDate && startDate !== endDate) {
-        finalDates = `${startDate} ~ ${endDate}`;
+      let finalDates = '';
+      if (isRange && endDate && dates[0] !== endDate) {
+        finalDates = `${dates[0]} ~ ${endDate}`;
+      } else {
+        finalDates = dates.filter(d => d.trim() !== '').sort().join(', ');
       }
 
       await updateJobPosting(jobId, {
@@ -98,11 +126,11 @@ export default function UpdateJobPage() {
         <button
           id="btn-submit-job"
           onClick={handleSubmit}
-          disabled={!title.trim() || !content.trim() || !startDate || submitting}
+          disabled={!title.trim() || !content.trim() || !hasValidDate || submitting}
           style={{
             padding: '8px 16px', borderRadius: 8,
-            background: title.trim() && content.trim() && startDate ? 'var(--accent)' : 'var(--surface)',
-            color: title.trim() && content.trim() && startDate ? 'var(--accent-ink)' : 'var(--text-faint)',
+            background: title.trim() && content.trim() && hasValidDate ? 'var(--accent)' : 'var(--surface)',
+            color: title.trim() && content.trim() && hasValidDate ? 'var(--accent-ink)' : 'var(--text-faint)',
             fontSize: 13, fontWeight: 700,
             transition: 'all var(--transition-fast)',
           }}
@@ -185,23 +213,23 @@ export default function UpdateJobPage() {
               기간으로 선택
             </label>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <input
-              type="date"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-              style={{
-                flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                fontSize: 14, color: 'var(--text)', colorScheme: 'dark'
-              }}
-            />
-            {isRange && (
-              <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {isRange ? (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <input
+                  type="date"
+                  value={dates[0] || ''}
+                  onChange={e => updateDate(0, e.target.value)}
+                  style={{
+                    flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
+                    background: 'var(--surface)', border: '1px solid var(--border)',
+                    fontSize: 14, color: 'var(--text)', colorScheme: 'dark'
+                  }}
+                />
                 <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>~</span>
                 <input
                   type="date"
-                  value={endDate}
+                  value={endDate || ''}
                   onChange={e => setEndDate(e.target.value)}
                   style={{
                     flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
@@ -209,6 +237,43 @@ export default function UpdateJobPage() {
                     fontSize: 14, color: 'var(--text)', colorScheme: 'dark'
                   }}
                 />
+              </div>
+            ) : (
+              <>
+                {dates.map((d, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <input
+                      type="date"
+                      value={d || ''}
+                      onChange={e => updateDate(idx, e.target.value)}
+                      style={{
+                        flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
+                        background: 'var(--surface)', border: '1px solid var(--border)',
+                        fontSize: 14, color: 'var(--text)', colorScheme: 'dark'
+                      }}
+                    />
+                    {dates.length > 1 && (
+                      <button 
+                        onClick={() => removeDate(idx)} 
+                        style={{ 
+                          background: 'var(--surface)', border: '1px solid var(--border)', 
+                          color: 'var(--danger)', width: 44, height: 44, borderRadius: 10, 
+                          cursor: 'pointer', fontSize: 16 
+                        }}
+                      >✕</button>
+                    )}
+                  </div>
+                ))}
+                {dates.length < 5 && (
+                  <button 
+                    onClick={addDate} 
+                    style={{ 
+                      width: '100%', height: 44, borderRadius: 10, 
+                      background: 'var(--bg-sunken)', border: '1px dashed var(--border)', 
+                      color: 'var(--text-muted)', fontSize: 13, fontWeight: 700, cursor: 'pointer' 
+                    }}
+                  >+ 날짜 추가</button>
+                )}
               </>
             )}
           </div>

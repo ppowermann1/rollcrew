@@ -19,6 +19,7 @@ const JOB_CATEGORIES = [
   { id: 'ALL',      label: '전체' },
   { id: 'FILMING',  label: '촬영' },
   { id: 'LIGHTING', label: '조명' },
+  { id: 'DIRECTING', label: '연출' },
   { id: 'ETC',      label: '기타' },
 ];
 

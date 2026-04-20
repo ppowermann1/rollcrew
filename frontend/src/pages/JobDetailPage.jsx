@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 const JOB_CATEGORIES = {
   FILMING:  { label: '촬영', hue: 300 },
   LIGHTING: { label: '조명', hue: 40 },
+  DIRECTING: { label: '연출', hue: 200 },
   ETC:      { label: '기타', hue: 155 },
 };
 
