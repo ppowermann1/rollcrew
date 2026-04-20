@@ -97,7 +97,7 @@ class CommunityCommentServiceTest {
                 .willReturn(Optional.of(mockNickname));
         given(communityCommentRepository.save(any(CommunityComment.class))).willReturn(mockComment);
 
-        CommentResponse response = communityCommentService.createComments(1L, request, mockPrincipal);
+        CommentResponse response = communityCommentService.createComments(1L, request, 1L);
 
         assertThat(response.getContent()).isEqualTo("댓글 내용");
         assertThat(response.getNickname()).isEqualTo("졸린 망고");
@@ -117,7 +117,7 @@ class CommunityCommentServiceTest {
         given(communityPostNicknameRepository.save(any(CommunityPostNickname.class))).willReturn(mockNickname);
         given(communityCommentRepository.save(any(CommunityComment.class))).willReturn(mockComment);
 
-        CommentResponse response = communityCommentService.createComments(1L, request, mockPrincipal);
+        CommentResponse response = communityCommentService.createComments(1L, request, 1L);
 
         verify(communityPostNicknameRepository).save(any(CommunityPostNickname.class));
         assertThat(response).isNotNull();
@@ -140,7 +140,7 @@ class CommunityCommentServiceTest {
                 .willReturn(Optional.of(mockNickname));
         given(communityCommentRepository.save(any(CommunityComment.class))).willReturn(reply);
 
-        CommentResponse response = communityCommentService.createComments(1L, request, mockPrincipal);
+        CommentResponse response = communityCommentService.createComments(1L, request, 1L);
 
         assertThat(response.getContent()).isEqualTo("대댓글");
     }
@@ -160,7 +160,7 @@ class CommunityCommentServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityCommentRepository.findById(11L)).willReturn(Optional.of(childComment));
 
-        assertThatThrownBy(() -> communityCommentService.createComments(1L, request, mockPrincipal))
+        assertThatThrownBy(() -> communityCommentService.createComments(1L, request, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.COMMENT_DEPTH_EXCEEDED.getMessage());
     }
@@ -174,7 +174,7 @@ class CommunityCommentServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(mockUser));
         given(communityPostRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityCommentService.createComments(99L, request, mockPrincipal))
+        assertThatThrownBy(() -> communityCommentService.createComments(99L, request, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
     }
@@ -189,7 +189,7 @@ class CommunityCommentServiceTest {
         given(communityPostRepository.findById(1L)).willReturn(Optional.of(mockPost));
         given(communityCommentRepository.findById(999L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityCommentService.createComments(1L, request, mockPrincipal))
+        assertThatThrownBy(() -> communityCommentService.createComments(1L, request, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
     }
@@ -273,7 +273,7 @@ class CommunityCommentServiceTest {
         given(communityPostNicknameRepository.findByUserAndCommunityPost(mockUser, mockPost))
                 .willReturn(Optional.of(mockNickname));
 
-        CommentResponse response = communityCommentService.updateComment(1L, request, mockPrincipal);
+        CommentResponse response = communityCommentService.updateComment(1L, request, 1L);
 
         assertThat(response.getContent()).isEqualTo("수정된 댓글");
         assertThat(response.getNickname()).isEqualTo("졸린 망고");
@@ -287,7 +287,7 @@ class CommunityCommentServiceTest {
         given(communityCommentRepository.findById(1L)).willReturn(Optional.of(mockComment));
         given(userRepository.findById(2L)).willReturn(Optional.of(otherUser));
 
-        assertThatThrownBy(() -> communityCommentService.updateComment(1L, request, otherPrincipal))
+        assertThatThrownBy(() -> communityCommentService.updateComment(1L, request, 2L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.FORBIDDEN_COMMENT.getMessage());
     }
@@ -299,7 +299,7 @@ class CommunityCommentServiceTest {
 
         given(communityCommentRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityCommentService.updateComment(99L, request, mockPrincipal))
+        assertThatThrownBy(() -> communityCommentService.updateComment(99L, request, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
     }
@@ -312,7 +312,7 @@ class CommunityCommentServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(mockUser));
         given(communityCommentRepository.findById(1L)).willReturn(Optional.of(mockComment));
 
-        communityCommentService.deleteComment(1L, mockPrincipal);
+        communityCommentService.deleteComment(1L, 1L);
 
         assertThat(mockComment.isDeleted()).isTrue();
     }
@@ -323,7 +323,7 @@ class CommunityCommentServiceTest {
         given(userRepository.findById(2L)).willReturn(Optional.of(otherUser));
         given(communityCommentRepository.findById(1L)).willReturn(Optional.of(mockComment));
 
-        assertThatThrownBy(() -> communityCommentService.deleteComment(1L, otherPrincipal))
+        assertThatThrownBy(() -> communityCommentService.deleteComment(1L, 2L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.FORBIDDEN_COMMENT.getMessage());
     }
@@ -334,7 +334,7 @@ class CommunityCommentServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(mockUser));
         given(communityCommentRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityCommentService.deleteComment(99L, mockPrincipal))
+        assertThatThrownBy(() -> communityCommentService.deleteComment(99L, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
     }
@@ -349,7 +349,7 @@ class CommunityCommentServiceTest {
         given(communityCommentLikeRepository.findByUserAndCommunityComment(mockUser, mockComment))
                 .willReturn(Optional.empty());
 
-        communityCommentService.toggleCommentLike(1L, LikeType.LIKE, mockPrincipal);
+        communityCommentService.toggleCommentLike(1L, LikeType.LIKE, 1L);
 
         verify(communityCommentLikeRepository).save(any(CommunityCommentLike.class));
     }
@@ -365,7 +365,7 @@ class CommunityCommentServiceTest {
         given(communityCommentLikeRepository.findByUserAndCommunityComment(mockUser, mockComment))
                 .willReturn(Optional.of(existing));
 
-        communityCommentService.toggleCommentLike(1L, LikeType.LIKE, mockPrincipal);
+        communityCommentService.toggleCommentLike(1L, LikeType.LIKE, 1L);
 
         verify(communityCommentLikeRepository).delete(existing);
     }
@@ -381,7 +381,7 @@ class CommunityCommentServiceTest {
         given(communityCommentLikeRepository.findByUserAndCommunityComment(mockUser, mockComment))
                 .willReturn(Optional.of(existing));
 
-        communityCommentService.toggleCommentLike(1L, LikeType.DISLIKE, mockPrincipal);
+        communityCommentService.toggleCommentLike(1L, LikeType.DISLIKE, 1L);
 
         verify(communityCommentLikeRepository).delete(existing);
         verify(communityCommentLikeRepository).save(any(CommunityCommentLike.class));
@@ -393,7 +393,7 @@ class CommunityCommentServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(mockUser));
         given(communityCommentRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communityCommentService.toggleCommentLike(99L, LikeType.LIKE, mockPrincipal))
+        assertThatThrownBy(() -> communityCommentService.toggleCommentLike(99L, LikeType.LIKE, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
     }
