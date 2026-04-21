@@ -1,6 +1,8 @@
 package com.rollcrew.rollcrew.global.security;
 
+import com.rollcrew.rollcrew.domain.user.entity.Profile;
 import com.rollcrew.rollcrew.domain.user.entity.User;
+import com.rollcrew.rollcrew.domain.user.repository.ProfileRepository;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -16,6 +18,7 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
 
 
     @Override
@@ -27,17 +30,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String providerId;
         String email;
         String nickname;
+        String profileImageUrl = null;
 
         if (provider.equals("naver")) {
             Map<String, Object> response = (Map<String, Object>) attributes.get("response");
             providerId = (String) response.get("id");
             email = (String) response.get("email");
             nickname = (String) response.get("nickname");
+            profileImageUrl = (String) response.get("profile_image");
+
         } else { // kakao
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             providerId = String.valueOf(attributes.get("id"));
             nickname = (String) profile.get("nickname");
+            profileImageUrl = (String) profile.get("profile_image_url");
+
             email = provider + "_" + providerId + "@rollcrew.com";
         }
         // DB 조회 - 없으면 신규 저장
@@ -50,6 +58,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 .providerId(providerId)
                                 .build()
                 ));
+        String finalProfileImageUrl = profileImageUrl;
+        profileRepository.findByUser(user).ifPresentOrElse(
+                p -> p.updateProfileImage(finalProfileImageUrl),
+                () -> profileRepository.save(
+                        Profile.builder()
+                                .user(user)
+                                .profileImageUrl(finalProfileImageUrl)
+                                .build()
+                )
+        );
+
 
         return new CustomOAuth2User(user, attributes);
     }

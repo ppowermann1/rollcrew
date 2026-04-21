@@ -23,7 +23,7 @@ public class Profile {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     private String bio;
@@ -40,5 +40,12 @@ public class Profile {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updateProfile(String bio) {
+        this.bio = bio;
+    }
 
 }
