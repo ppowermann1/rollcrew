@@ -4,7 +4,7 @@ import { IconHome, IconBoard, IconBell, IconUser } from '../common/Icons';
 
 const tabs = [
   { id: 'home',  path: '/',              label: '홈',     icon: IconHome },
-  { id: 'board', path: '/',              label: '기능',   icon: IconBoard },
+  { id: 'board', path: '/features',      label: '기능',   icon: IconBoard },
   { id: 'noti',  path: '/notifications', label: '알림',   icon: IconBell, badge: 3 },
   { id: 'me',    path: '/profile',       label: '프로필', icon: IconUser },
 ];
@@ -15,7 +15,8 @@ export default function TabBar() {
 
   const getActiveTab = () => {
     if (location.pathname === '/notifications') return 'noti';
-    if (location.pathname === '/profile') return 'me';
+    if (location.pathname.startsWith('/profile')) return 'me';
+    if (location.pathname === '/features') return 'board';
     return 'home';
   };
 

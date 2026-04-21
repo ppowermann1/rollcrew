@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
 import { IconBack, IconMore } from '../components/common/Icons';
 import { getJobPosting, deleteJobPosting, updateJobPosting, createApply, getApplies, updateApplyStatus, cancelApply } from '../api/jobApi';
+import { getProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
 
 const JOB_CATEGORIES = {
@@ -35,6 +36,7 @@ export default function JobDetailPage() {
   const [applying, setApplying] = useState(false);
   const [myApply, setMyApply] = useState(null);
   const [toast, setToast] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // 지원자 목록 (작성자 — 인라인)
   const [applicants, setApplicants] = useState([]);
@@ -401,10 +403,62 @@ export default function JobDetailPage() {
             padding: '24px 20px 40px', zIndex: 101,
             boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
           }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 16 }}>지원 메시지</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>지원 메시지</div>
+              <button
+                onClick={async () => {
+                  setProfileLoading(true);
+                  try {
+                    const profile = await getProfile();
+                    if (profile?.bio) {
+                      setApplyMessage(profile.bio);
+                    } else {
+                      setApplyMessage('__NO_BIO__');
+                    }
+                  } catch {
+                    showToast('프로필을 불러오지 못했어요');
+                  } finally {
+                    setProfileLoading(false);
+                  }
+                }}
+                disabled={profileLoading}
+                style={{
+                  fontSize: 12, fontWeight: 700,
+                  color: 'var(--accent)', padding: '5px 12px',
+                  borderRadius: 8, background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  opacity: profileLoading ? 0.5 : 1,
+                }}
+              >{profileLoading ? '불러오는 중...' : '내 프로필 가져오기'}</button>
+            </div>
+            {applyMessage === '__NO_BIO__' && (
+              <div style={{
+                marginBottom: 12, padding: '12px 14px', borderRadius: 10,
+                background: 'rgba(255,107,107,0.07)',
+                border: '1px solid rgba(255,107,107,0.18)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>
+                    아직 자기소개가 없어요
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    프로필에서 작성하면 다음엔 바로 채워져요
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setShowApplySheet(false); setApplyMessage(''); navigate('/profile'); }}
+                  style={{
+                    flexShrink: 0, fontSize: 12, fontWeight: 700,
+                    color: 'var(--accent-ink)', padding: '6px 12px',
+                    borderRadius: 8, background: 'var(--accent)',
+                  }}
+                >프로필 가기</button>
+              </div>
+            )}
             <textarea
               ref={textareaRef}
-              value={applyMessage}
+              value={applyMessage === '__NO_BIO__' ? '' : applyMessage}
               onChange={e => setApplyMessage(e.target.value)}
               placeholder="포트폴리오 링크나 간단한 소개를 입력해주세요 (선택)"
               style={{
