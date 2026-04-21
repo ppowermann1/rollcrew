@@ -12,9 +12,11 @@ import java.util.Optional;
 @Repository
 public interface CommunityPostNicknameRepository extends JpaRepository<CommunityPostNickname, Long> {
 
-    Optional<CommunityPostNickname> findAuthorNicknameByCommunityPost(CommunityPost post);
     Optional<CommunityPostNickname> findByUserAndCommunityPost(User user, CommunityPost communityPost);
 
+    List<CommunityPostNickname> findByCommunityPost(CommunityPost communityPost);
+
     List<CommunityPostNickname> findByCommunityPostIn(List<CommunityPost> posts);
+
 
 }

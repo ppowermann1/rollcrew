@@ -99,11 +99,12 @@ public class CommunityCommentService {
 
         // 2. 해당 게시글의 작성자별 익명 닉네임 일괄 조회 (Map 변환)
         Map<Long, String> nicknameMap = communityPostNicknameRepository
-                .findAuthorNicknameByCommunityPost(communityPost)
+                .findByCommunityPost(communityPost)
                 .stream()
                 .collect(Collectors.toMap(
                         n -> n.getUser().getId(),
-                        CommunityPostNickname::getNickname
+                        CommunityPostNickname::getNickname,
+                        (existing, replacement) -> existing
                 ));
 
         // 3. 대댓글 그룹화 (부모 ID 기준 Map 변환)
@@ -117,7 +118,10 @@ public class CommunityCommentService {
                 .stream()
                 .collect(Collectors.groupingBy(cl -> cl.getCommunityComment().getId()));
 
-        // 5. 최상위 댓글 필터링 및 대댓글 매핑을 포함한 DTO 변환
+        // 5. 게시글 작성자 userId
+        Long postAuthorId = communityPost.getUser().getId();
+
+        // 6. 최상위 댓글 필터링 및 대댓글 매핑을 포함한 DTO 변환
         return allComments.stream()
                 .filter(c -> c.getParent() == null)
                 .map(c -> CommentResponse.builder()
@@ -130,6 +134,7 @@ public class CommunityCommentService {
                         .content(c.getContent())
                         .nickname(nicknameMap.getOrDefault(c.getUser().getId(), "Unknown"))
                         .createdAt(c.getCreatedAt())
+                        .isAuthor(postAuthorId.equals(c.getUser().getId()))
                         .replies(replyMap.getOrDefault(c.getId(), List.of()).stream()
                                 .map(reply -> CommentResponse.builder()
                                         .id(reply.getId())
@@ -142,6 +147,7 @@ public class CommunityCommentService {
                                                 .filter(cl -> cl.getLikeType() == LikeType.DISLIKE).count())
                                         .replies(List.of())
                                         .isDeleted(reply.isDeleted())
+                                        .isAuthor(postAuthorId.equals(reply.getUser().getId()))
                                         .build())
                                 .toList())
                         .build())

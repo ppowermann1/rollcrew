@@ -10,6 +10,7 @@ import { getPost, togglePostLike, updatePost, deletePost } from '../api/communit
 import { getComments, createComment, toggleCommentLike } from '../api/commentApi';
 import { useAuth } from '../context/AuthContext';
 import { timeAgo } from '../utils/time';
+import { generateRandomNickname } from '../utils/randomNickname';
 
 export default function PostDetailPage() {
   const { postId } = useParams();
@@ -29,6 +30,7 @@ export default function PostDetailPage() {
   const [commentText, setCommentText] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [commentNickname] = useState(() => generateRandomNickname());
 
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,7 +101,7 @@ export default function PostDetailPage() {
     setSubmitting(true);
     try {
       await createComment(postId, {
-        nickname: user?.nickname || '익명',
+        nickname: commentNickname,
         content: commentText,
         parentId: replyTo?.id || null,
       });

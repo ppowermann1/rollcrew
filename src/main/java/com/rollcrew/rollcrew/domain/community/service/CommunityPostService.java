@@ -113,7 +113,8 @@ public class CommunityPostService {
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        CommunityPostNickname communityPostNickname = communityPostNicknameRepository.findAuthorNicknameByCommunityPost(communityPost)
+        CommunityPostNickname communityPostNickname = communityPostNicknameRepository
+                .findByUserAndCommunityPost(communityPost.getUser(), communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
         long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);
@@ -151,7 +152,7 @@ public class CommunityPostService {
         communityPost.updatePost(request.getTitle(), request.getContent());
 
         CommunityPostNickname communityPostNickname = communityPostNicknameRepository
-                .findAuthorNicknameByCommunityPost(communityPost)
+                .findByUserAndCommunityPost(communityPost.getUser(), communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
         long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);

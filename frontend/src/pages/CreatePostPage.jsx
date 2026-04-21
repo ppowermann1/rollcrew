@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
-import { IconBack } from '../components/common/Icons';
+import { IconBack, IconDice } from '../components/common/Icons';
 import { createPost } from '../api/communityApi';
 import { useAuth } from '../context/AuthContext';
 import { generateRandomNickname } from '../utils/randomNickname';
@@ -40,7 +40,7 @@ export default function CreatePostPage() {
         communityCategory: category,
         nickname: nickname,
       });
-      navigate('/');
+      navigate('/', { state: { tab: 'community' } });
     } catch (err) {
       console.error('게시글 작성 실패:', err);
       setError('게시글 작성에 실패했습니다. 다시 시도해주세요.');
@@ -56,7 +56,7 @@ export default function CreatePostPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>글쓰기</div>
@@ -113,16 +113,34 @@ export default function CreatePostPage() {
             fontSize: 12, fontWeight: 700, color: 'var(--text-muted)',
             display: 'block', marginBottom: 8,
           }}>작성자 (익명)</label>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8,
-            background: 'var(--bg-sunken)', border: '1px solid var(--border)',
-            fontSize: 13, fontWeight: 700, color: 'var(--text)',
-          }}>
-            <span style={{ fontSize: 16 }}>🎭</span> {nickname}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 10,
+              background: 'var(--bg-sunken)', border: '1px solid var(--border)',
+              fontSize: 13, fontWeight: 700, color: 'var(--text)',
+            }}>
+              {nickname}
+            </div>
+            <button
+              type="button"
+              onClick={() => setNickname(generateRandomNickname())}
+              title="다른 닉네임으로 바꾸기"
+              style={{
+                width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                background: 'var(--bg-sunken)', border: '1px solid var(--border)',
+                color: 'var(--text-muted)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'color 0.15s, border-color 0.15s',
+              }}
+              onTouchStart={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onTouchEnd={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            >
+              <IconDice size={18} sw={1.5} />
+            </button>
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6, marginLeft: 2 }}>
-            안전한 커뮤니티를 위해 익명 닉네임이 무작위로 부여됩니다.
+            익명 닉네임이 무작위로 부여됩니다. 주사위를 굴려 바꿀 수 있어요.
           </div>
         </div>
 

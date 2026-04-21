@@ -88,6 +88,9 @@ export default function HomePage() {
   };
 
   const [showFabMenu, setShowFabMenu] = useState(false);
+  const [fabActive, setFabActive] = useState(false);
+  const [commActive, setCommActive] = useState(false);
+  const [jobActive, setJobActive] = useState(false);
 
   const handleFabClick = () => {
     if (!isAuthenticated) {
@@ -112,8 +115,8 @@ export default function HomePage() {
         zIndex: 40,
       }}>
         {[
-          { id: 'community', label: '커뮤니티' },
           { id: 'job', label: '구인구직' },
+          { id: 'community', label: '커뮤니티' },
         ].map(tb => (
           <button
             key={tb.id}
@@ -295,13 +298,18 @@ export default function HomePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
               <button
                 onClick={() => { setShowFabMenu(false); navigate('/posts/create'); }}
+                onTouchStart={() => setCommActive(true)}
+                onTouchEnd={() => setCommActive(false)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 16px', borderRadius: 12,
-                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  background: commActive ? 'var(--bg-sunken)' : 'var(--surface)',
+                  border: '1px solid var(--border)',
                   color: 'var(--text)', fontSize: 14, fontWeight: 700,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
                   cursor: 'pointer', whiteSpace: 'nowrap',
+                  transform: commActive ? 'scale(0.96)' : 'scale(1)',
+                  transition: 'transform 0.1s, background 0.1s',
                 }}
               >
                 <span style={{
@@ -314,13 +322,18 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => { setShowFabMenu(false); navigate('/jobs/create'); }}
+                onTouchStart={() => setJobActive(true)}
+                onTouchEnd={() => setJobActive(false)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 16px', borderRadius: 12,
-                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  background: jobActive ? 'var(--bg-sunken)' : 'var(--surface)',
+                  border: '1px solid var(--border)',
                   color: 'var(--text)', fontSize: 14, fontWeight: 700,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
                   cursor: 'pointer', whiteSpace: 'nowrap',
+                  transform: jobActive ? 'scale(0.96)' : 'scale(1)',
+                  transition: 'transform 0.1s, background 0.1s',
                 }}
               >
                 <span style={{
@@ -339,14 +352,20 @@ export default function HomePage() {
         <button
           id="fab-create"
           onClick={handleFabClick}
+          onTouchStart={() => setFabActive(true)}
+          onTouchEnd={() => setFabActive(false)}
           style={{
             width: 50, height: 50, borderRadius: 14,
             background: 'var(--accent)', color: 'var(--accent-ink)',
             border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(255,107,107,0.35)',
-            transition: 'transform var(--transition-fast)',
-            transform: showFabMenu ? 'rotate(45deg)' : 'rotate(0deg)',
+            boxShadow: fabActive
+              ? '0 2px 8px rgba(255,107,107,0.25)'
+              : '0 4px 16px rgba(255,107,107,0.35)',
+            transition: 'transform 0.12s, box-shadow 0.12s',
+            transform: showFabMenu
+              ? (fabActive ? 'rotate(45deg) scale(0.92)' : 'rotate(45deg)')
+              : (fabActive ? 'scale(0.92)' : 'scale(1)'),
           }}
         >
           <IconPlus size={22} sw={2.4} />

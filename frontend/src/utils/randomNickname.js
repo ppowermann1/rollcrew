@@ -1,29 +1,56 @@
-// 랜덤 닉네임 생성기
+// 랜덤 닉네임 생성기 — 영상 업계 도메인 컨셉
 const ADJECTIVES = [
-  '귀여운', '깜찍한', '사랑스러운', '앙증맞은', '뽀짝한',
-  '폭신한', '말랑한', '몽글몽글한', '동글동글한', '포근한',
-  '따스한', '보들보들한', '말랑말랑한', '말랑쫀득한', '새콤한',
-  '달콤한', '상큼한', '풋풋한', '싱그러운', '해맑은',
-  '수줍은', '다정한', '상냥한', '따뜻한', '포근포근한',
-  '엉뚱한', '장난꾸러기', '천진난만한', '당찬', '씩씩한',
-  '용감한', '호기심많은', '재치있는', '똑똑한', '영리한',
-  '느긋한', '나른한', '평화로운', '조용한', '차분한',
-  '행복한', '즐거운', '신나는', '활기찬', '명랑한',
-  '반짝이는', '눈부신', '화사한', '향기로운', '매력적인'
+  '날카로운', '예리한', '섬세한', '감각있는', '빠른',
+  '조용한', '차분한', '날렵한', '정확한', '냉철한',
+  '대담한', '신중한', '열정적인', '꼼꼼한', '노련한',
+  '창의적인', '독창적인', '기민한', '능숙한', '집중하는',
+  '과감한', '묵직한', '서늘한', '깔끔한', '단단한',
 ];
 
 const NOUNS = [
-  '강아지', '고양이', '토끼', '다람쥐', '햄스터',
-  '병아리', '오리', '뱁새', '펭귄', '수달',
-  '해달', '물개', '고슴도치', '알파카', '사슴',
-  '쿼카', '코알라', '판다', '레서판다', '북극곰',
-  '새싹', '민들레', '해바라기', '튤립', '장미',
-  '다육이', '선인장', '네잎클로버', '단풍잎', '은행잎'
+  // 현장 전문 용어
+  'B캠', '포커스풀러', '슬레이트', '붐맨', 'DIT',
+  '가퍼', '그리퍼', '스크립터', '스테디캠', '클래퍼',
+  // 일반 영상 단어
+  '감독', '렌즈', '필름', '프레임', '앵글',
+  '컷', '씬', '샷', '조명', '카메라',
+  '모니터', '뷰파인더', '삼각대', '짐벌', '돌리',
 ];
 
+const EMOJIS = ['🎬', '🎥', '🎞', '📽', '🎦', '💡', '🎙', '📷', '🔦', '🎚'];
+
+const HISTORY_KEY = 'rc_nickname_history';
+const MAX_HISTORY = 15;
+
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function addToHistory(nickname) {
+  const history = getHistory();
+  const updated = [nickname, ...history].slice(0, MAX_HISTORY);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+}
+
 export function generateRandomNickname() {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-  const randomNum = Math.floor(Math.random() * 99) + 1; // 1~99 랜덤 숫자
-  return `${adj} ${noun} ${randomNum}`;
+  const history = getHistory();
+  const maxAttempts = ADJECTIVES.length * NOUNS.length * EMOJIS.length;
+
+  let nickname;
+  let attempts = 0;
+
+  do {
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+    nickname = `${adj} ${noun} ${emoji}`;
+    attempts++;
+  } while (history.includes(nickname) && attempts < maxAttempts);
+
+  addToHistory(nickname);
+  return nickname;
 }

@@ -67,7 +67,7 @@ export default function CreateJobPage() {
         category,
         shootingDates: finalDates,
       });
-      navigate('/');
+      navigate('/', { state: { tab: 'job' } });
     } catch (err) {
       console.error('구인구직 작성 실패:', err);
       setError('게시글 작성에 실패했습니다. 다시 시도해주세요.');
@@ -83,7 +83,7 @@ export default function CreateJobPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>구인구직 등록</div>
