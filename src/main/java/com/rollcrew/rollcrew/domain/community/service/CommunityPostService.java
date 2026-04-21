@@ -65,8 +65,10 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CommunityPostListResponse> getPostList(Pageable pageable) {
-        Page<CommunityPost> posts = communityPostRepository.findAll(pageable);
+    public Page<CommunityPostListResponse> getPostList(CommunityCategory communityCategory, Pageable pageable) {
+        Page<CommunityPost> posts = communityCategory != null
+                ? communityPostRepository.findByCommunityCategory(communityCategory, pageable)
+                : communityPostRepository.findAll(pageable);
         List<CommunityPost> postList = posts.getContent();
 
         Map<Long, List<CommunityPostLike>> likeMap = communityPostLikeRepository
@@ -96,6 +98,7 @@ public class CommunityPostService {
 
         return CommunityPostListResponse.builder()
                 .id(post.getId())
+                .communityCategory(post.getCommunityCategory())
                 .title(post.getTitle())
                 .nickname(nickname)
                 .createdAt(post.getCreatedAt())
@@ -122,10 +125,13 @@ public class CommunityPostService {
                 .toList();
 
         return CommunityPostResponse.builder()
+                .id(communityPost.getId())
+                .userId(communityPost.getUser().getId())
                 .title(communityPost.getTitle())
                 .nickname(communityPostNickname.getNickname())
                 .content(communityPost.getContent())
                 .imageURL(imageUrls)
+                .communityCategory(communityPost.getCommunityCategory())
                 .createdAt(communityPost.getCreatedAt())
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)
@@ -148,11 +154,25 @@ public class CommunityPostService {
                 .findAuthorNicknameByCommunityPost(communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
+        long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);
+        long dislikeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.DISLIKE);
+
+        List<String> imageUrls = communityPostImageRepository.findByCommunityPost(communityPost)
+                .stream()
+                .map(CommunityPostImage::getImageUrl)
+                .toList();
+
         return CommunityPostResponse.builder()
+                .id(communityPost.getId())
+                .userId(communityPost.getUser().getId())
                 .title(communityPost.getTitle())
                 .nickname(communityPostNickname.getNickname())
                 .content(communityPost.getContent())
+                .imageURL(imageUrls)
+                .communityCategory(communityPost.getCommunityCategory())
                 .createdAt(communityPost.getCreatedAt())
+                .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
                 .build();
     }
 

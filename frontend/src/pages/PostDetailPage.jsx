@@ -6,7 +6,7 @@ import IconBtn from '../components/common/IconBtn';
 import ShotPlaceholder from '../components/common/ShotPlaceholder';
 import CommentItem from '../components/community/CommentItem';
 import { IconBack, IconMore, IconThumbUp, IconThumbDown, IconShare, IconPlus } from '../components/common/Icons';
-import { getPost, togglePostLike } from '../api/communityApi';
+import { getPost, togglePostLike, updatePost, deletePost } from '../api/communityApi';
 import { getComments, createComment, toggleCommentLike } from '../api/commentApi';
 import { useAuth } from '../context/AuthContext';
 import { timeAgo } from '../utils/time';
@@ -29,6 +29,12 @@ export default function PostDetailPage() {
   const [commentText, setCommentText] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -135,7 +141,7 @@ export default function PostDetailPage() {
           display: 'flex', alignItems: 'center', padding: '10px 16px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+          <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
         </div>
         <div className="empty-state">
           <div className="empty-icon">😥</div>
@@ -144,6 +150,39 @@ export default function PostDetailPage() {
       </div>
     );
   }
+
+  const isOwner = isAuthenticated && user?.id === post?.userId;
+
+  const handleEdit = () => {
+    setEditTitle(post.title);
+    setEditContent(post.content);
+    setIsEditing(true);
+    setShowMenu(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim() || !editContent.trim() || saving) return;
+    setSaving(true);
+    try {
+      const updated = await updatePost(postId, { title: editTitle.trim(), content: editContent.trim() });
+      setPost(prev => ({ ...prev, title: updated.title, content: updated.content }));
+      setIsEditing(false);
+    } catch (err) {
+      console.error('수정 실패:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('게시글을 삭제하시겠습니까?')) return;
+    try {
+      await deletePost(postId);
+      navigate(-1);
+    } catch (err) {
+      console.error('삭제 실패:', err);
+    }
+  };
 
   const commentCount = comments.reduce((acc, c) => {
     let count = c.isDeleted ? 0 : 1;
@@ -160,20 +199,74 @@ export default function PostDetailPage() {
         background: 'var(--bg)',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>커뮤니티</div>
-        <IconBtn><IconMore size={20} /></IconBtn>
+        {isOwner ? (
+          <div style={{ position: 'relative' }}>
+            <IconBtn onClick={() => setShowMenu(v => !v)}><IconMore size={20} /></IconBtn>
+            {showMenu && (
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 98 }}
+                  onClick={() => setShowMenu(false)}
+                />
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, zIndex: 99,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  minWidth: 120, overflow: 'hidden',
+                }}>
+                  <button
+                    onClick={handleEdit}
+                    style={{
+                      display: 'block', width: '100%', padding: '12px 16px',
+                      textAlign: 'left', fontSize: 14, fontWeight: 600,
+                      color: 'var(--text)', background: 'transparent', cursor: 'pointer',
+                      borderBottom: '1px solid var(--border)',
+                    }}
+                  >수정</button>
+                  <button
+                    onClick={() => { setShowMenu(false); handleDelete(); }}
+                    style={{
+                      display: 'block', width: '100%', padding: '12px 16px',
+                      textAlign: 'left', fontSize: 14, fontWeight: 600,
+                      color: 'var(--danger)', background: 'transparent', cursor: 'pointer',
+                    }}
+                  >삭제</button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div style={{ width: 40 }} />
+        )}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 70 }}>
         {/* 제목 + 작성자 */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border)' }}>
-          <h1 style={{
-            margin: '0 0 16px 0', fontSize: 20, fontWeight: 800,
-            lineHeight: 1.35, letterSpacing: -0.5, color: 'var(--text)',
-          }}>{post.title}</h1>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              maxLength={100}
+              style={{
+                display: 'block', width: '100%', marginBottom: 16,
+                fontSize: 18, fontWeight: 800, color: 'var(--text)',
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '10px 14px',
+                boxSizing: 'border-box',
+              }}
+            />
+          ) : (
+            <h1 style={{
+              margin: '0 0 16px 0', fontSize: 20, fontWeight: 800,
+              lineHeight: 1.35, letterSpacing: -0.5, color: 'var(--text)',
+            }}>{post.title}</h1>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Avatar name={post.nickname} size={34} />
             <div>
@@ -189,12 +282,49 @@ export default function PostDetailPage() {
 
         {/* 본문 */}
         <div style={{ padding: '18px 20px' }}>
-          <p style={{
-            margin: 0, fontSize: 14.5, lineHeight: 1.75,
-            color: 'var(--text)', letterSpacing: -0.2, whiteSpace: 'pre-line',
-          }}>{post.content}</p>
+          {isEditing ? (
+            <>
+              <textarea
+                value={editContent}
+                onChange={e => setEditContent(e.target.value)}
+                rows={10}
+                style={{
+                  display: 'block', width: '100%', marginBottom: 12,
+                  fontSize: 14, color: 'var(--text)', lineHeight: 1.75,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '12px 14px', resize: 'vertical',
+                  minHeight: 180, boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={!editTitle.trim() || !editContent.trim() || saving}
+                  style={{
+                    flex: 1, height: 42, borderRadius: 10, fontSize: 14, fontWeight: 700,
+                    background: editTitle.trim() && editContent.trim() ? 'var(--accent)' : 'var(--surface)',
+                    color: editTitle.trim() && editContent.trim() ? 'var(--accent-ink)' : 'var(--text-faint)',
+                    cursor: editTitle.trim() && editContent.trim() ? 'pointer' : 'default',
+                  }}
+                >{saving ? '저장 중...' : '저장'}</button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  style={{
+                    flex: 1, height: 42, borderRadius: 10, fontSize: 14, fontWeight: 700,
+                    border: '1.5px solid var(--border)', background: 'transparent',
+                    color: 'var(--text)', cursor: 'pointer',
+                  }}
+                >취소</button>
+              </div>
+            </>
+          ) : (
+            <p style={{
+              margin: 0, fontSize: 14.5, lineHeight: 1.75,
+              color: 'var(--text)', letterSpacing: -0.2, whiteSpace: 'pre-line',
+            }}>{post.content}</p>
+          )}
 
-          {post.imageURL && post.imageURL.length > 0 && (
+          {!isEditing && post.imageURL && post.imageURL.length > 0 && (
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {post.imageURL.map((url, i) => (
                 <ShotPlaceholder key={i} tag={url} h={190} imageUrl={url.startsWith('http') ? url : null} />
@@ -203,7 +333,7 @@ export default function PostDetailPage() {
           )}
 
           {/* 좋아요 / 싫어요 */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+          {!isEditing && <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
             <button
               id="btn-like"
               onClick={handleToggleLike}
@@ -244,7 +374,7 @@ export default function PostDetailPage() {
               color: 'var(--text)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}><IconShare size={18} /></button>
-          </div>
+          </div>}
         </div>
 
         {/* 댓글 헤더 */}

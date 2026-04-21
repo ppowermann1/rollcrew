@@ -142,7 +142,7 @@ export default function JobDetailPage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
-          <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+          <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
         </div>
         <div className="empty-state">
           <div className="empty-icon">😥</div>
@@ -165,7 +165,7 @@ export default function JobDetailPage() {
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
         <div style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>구인구직</div>
         {isAuthor
           ? <IconBtn onClick={() => setShowActionSheet(true)}><IconMore size={20} /></IconBtn>

@@ -12,10 +12,10 @@ import java.util.List;
 
 public interface CommunityCommentRepository extends JpaRepository<CommunityComment, Long> {
     List<CommunityComment> findByCommunityPostAndParentIsNull(CommunityPost communityPost);
+
     List<CommunityComment> findByParent(CommunityComment parent);
 
     @Query("SELECT c FROM CommunityComment c LEFT JOIN FETCH c.parent WHERE c.communityPost = :communityPost")
-    Page<CommunityComment> findByCommunityPostWithParent(
-            @Param("communityPost") CommunityPost communityPost,
-            Pageable pageable);
+    Page<CommunityComment> findByCommunityPostWithParent(@Param("communityPost") CommunityPost communityPost,
+                                                         Pageable pageable);
 }

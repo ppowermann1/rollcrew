@@ -1,6 +1,6 @@
 // HomePage — 홈 (커뮤니티 + 구인구직 탭)
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import FeedItem from '../components/community/FeedItem';
 import JobRow from '../components/job/JobRow';
@@ -26,8 +26,9 @@ const JOB_CATEGORIES = [
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const [tab, setTab] = useState('community');
+  const [tab, setTab] = useState(location.state?.tab || 'community');
   const [activeCat, setActiveCat] = useState('ALL');
   const [activeJobCat, setActiveJobCat] = useState('ALL');
 
@@ -46,7 +47,8 @@ export default function HomePage() {
     setError(null);
     try {
       if (tab === 'community') {
-        const data = await getPosts(commPage, 20);
+        const category = activeCat === 'ALL' ? null : activeCat;
+        const data = await getPosts(commPage, 20, category);
         setPosts(data.content || data || []);
         setCommTotal(data.totalPages || 1);
       } else {
@@ -66,7 +68,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [tab, commPage, jobPage]);
+  }, [tab, commPage, jobPage, activeCat]);
 
   useEffect(() => {
     fetchData();
@@ -78,27 +80,21 @@ export default function HomePage() {
     : jobs.filter(j => j.category === activeJobCat);
 
   const handleOpenPost = (post) => {
-    // ⚠️ CommunityPostListResponse에 id가 없으므로 상세 이동 불가
-    // 향후 백엔드에서 id 추가 시 연동 가능
-    if (post.id) {
-      navigate(`/posts/${post.id}`);
-    }
+    navigate(`/posts/${post.id}`);
   };
 
   const handleOpenJob = (job) => {
     navigate(`/jobs/${job.id}`);
   };
 
+  const [showFabMenu, setShowFabMenu] = useState(false);
+
   const handleFabClick = () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    if (tab === 'community') {
-      navigate('/posts/create');
-    } else {
-      navigate('/jobs/create');
-    }
+    setShowFabMenu(v => !v);
   };
 
   return (
@@ -150,7 +146,10 @@ export default function HomePage() {
           return (
             <button
               key={c.id}
-              onClick={() => tab === 'community' ? setActiveCat(c.id) : setActiveJobCat(c.id)}
+              onClick={() => {
+                if (tab === 'community') { setActiveCat(c.id); setCommPage(0); }
+                else setActiveJobCat(c.id);
+              }}
               style={{
                 height: 34, padding: '0 4px', whiteSpace: 'nowrap',
                 border: 'none', background: 'transparent',
@@ -207,7 +206,7 @@ export default function HomePage() {
           )}
 
           {!loading && !error && tab === 'community' && posts.map((p, i) => (
-            <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} />
+            <FeedItem key={p.id || i} post={p} onClick={handleOpenPost} />
           ))}
 
           {!loading && !error && tab === 'job' && filteredJobs.length === 0 && (
@@ -278,25 +277,81 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* FAB 버튼 */}
-      <button
-        id="fab-create"
-        onClick={handleFabClick}
-        style={{
-          position: 'fixed', bottom: 80, right: 'calc(50% - 220px)',
-          width: 50, height: 50, borderRadius: 25,
-          background: 'var(--accent)', color: 'var(--accent-ink)',
-          border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(255,107,107,0.35)',
-          zIndex: 50,
-          transition: 'transform var(--transition-fast)',
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-      >
-        <IconPlus size={22} sw={2.4} />
-      </button>
+      {/* FAB + 메뉴 */}
+      <div style={{
+        position: 'fixed',
+        bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))',
+        right: 'max(16px, calc(50% - 224px))',
+        zIndex: 99,
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10,
+      }}>
+        {/* 메뉴 팝업 */}
+        {showFabMenu && (
+          <>
+            <div
+              style={{ position: 'fixed', inset: 0, zIndex: -1 }}
+              onClick={() => setShowFabMenu(false)}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+              <button
+                onClick={() => { setShowFabMenu(false); navigate('/posts/create'); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 16px', borderRadius: 12,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  color: 'var(--text)', fontSize: 14, fontWeight: 700,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: 'var(--accent)', color: 'var(--accent-ink)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 15, fontWeight: 800,
+                }}>✏️</span>
+                커뮤니티 글쓰기
+              </button>
+              <button
+                onClick={() => { setShowFabMenu(false); navigate('/jobs/create'); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 16px', borderRadius: 12,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  color: 'var(--text)', fontSize: 14, fontWeight: 700,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: '#5BD4A6', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 15,
+                }}>🎬</span>
+                구인구직 글쓰기
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* FAB 버튼 */}
+        <button
+          id="fab-create"
+          onClick={handleFabClick}
+          style={{
+            width: 50, height: 50, borderRadius: 14,
+            background: 'var(--accent)', color: 'var(--accent-ink)',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(255,107,107,0.35)',
+            transition: 'transform var(--transition-fast)',
+            transform: showFabMenu ? 'rotate(45deg)' : 'rotate(0deg)',
+          }}
+        >
+          <IconPlus size={22} sw={2.4} />
+        </button>
+      </div>
     </div>
   );
 }

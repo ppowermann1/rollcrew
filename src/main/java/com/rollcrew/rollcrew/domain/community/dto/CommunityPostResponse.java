@@ -14,6 +14,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommunityPostResponse {
+    private Long id;
+
+    private Long userId;
+
+    private CommunityCategory communityCategory;
+
     private String title;
 
     private String nickname;

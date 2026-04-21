@@ -3,6 +3,7 @@ package com.rollcrew.rollcrew.domain.community.controller;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostListResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostResponse;
+import com.rollcrew.rollcrew.domain.community.entity.CommunityCategory;
 import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityPostService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
@@ -33,8 +34,9 @@ public class CommunityPostController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<CommunityPostListResponse>>> getCommunityPostList(
+            @RequestParam(required = false) CommunityCategory communityCategory,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<CommunityPostListResponse> responses = communityPostService.getPostList(pageable);
+        Page<CommunityPostListResponse> responses = communityPostService.getPostList(communityCategory, pageable);
         return ResponseEntity.ok().body(ApiResponse.ok(responses));
     }
 

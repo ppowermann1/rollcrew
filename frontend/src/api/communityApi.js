@@ -3,18 +3,20 @@ import client from './client';
 
 /**
  * 게시글 목록 조회 (페이지네이션)
- * 백엔드 응답: { success, message, data: { content: [...], totalPages, totalElements, ... } }
- * ⚠️ CommunityPostListResponse에는 id, communityCategory, commentCount가 없음
+ * @param {number} page
+ * @param {number} size
+ * @param {'GENERAL'|'ACCUSATION'|null} communityCategory - null이면 전체
  */
-export const getPosts = async (page = 0, size = 20) => {
-  const res = await client.get('/api/community/posts', { params: { page, size } });
+export const getPosts = async (page = 0, size = 20, communityCategory = null) => {
+  const params = { page, size };
+  if (communityCategory) params.communityCategory = communityCategory;
+  const res = await client.get('/api/community/posts', { params });
   return res.data.data;
 };
 
 /**
  * 게시글 상세 조회
- * 백엔드 응답: CommunityPostResponse { title, nickname, content, imageURL[], createdAt, likeCount, dislikeCount }
- * ⚠️ CommunityPostResponse에도 id가 없으나, URL 파라미터에서 id를 가져와 사용
+ * 백엔드 응답: CommunityPostResponse { id, communityCategory, title, nickname, content, imageURL[], createdAt, likeCount, dislikeCount }
  */
 export const getPost = async (postId) => {
   const res = await client.get(`/api/community/posts/${postId}`);
