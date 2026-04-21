@@ -11,6 +11,7 @@ export const getComments = async (postId, page = 0) => {
   const res = await client.get(`/api/community/comments/${postId}`, {
     params: { page },
   });
+  // { comments, totalPages, currentPage }
   return res.data.data;
 };
 

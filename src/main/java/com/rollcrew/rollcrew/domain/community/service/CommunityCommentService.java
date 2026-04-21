@@ -1,6 +1,7 @@
 package com.rollcrew.rollcrew.domain.community.service;
 
 import com.rollcrew.rollcrew.domain.community.dto.CommentCreateRequest;
+import com.rollcrew.rollcrew.domain.community.dto.CommentPageResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
 import com.rollcrew.rollcrew.domain.community.entity.*;
@@ -85,19 +86,31 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentResponse> getComments(Long postId, int page) {
+    public CommentPageResponse getComments(Long postId, int page) {
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").ascending());
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        Page<CommunityComment> byCommunityPostWithParent = communityCommentRepository.findByCommunityPostWithParent(communityPost, pageable);
+        // 1. 최상위 댓글만 페이징
+        Page<CommunityComment> topLevelPage = communityCommentRepository
+                .findByCommunityPostAndParentIsNull(communityPost, pageable);
+        List<CommunityComment> topLevelComments = topLevelPage.getContent();
 
-        // 1. 페이징된 결과에서 전체 댓글 리스트 추출
-        List<CommunityComment> allComments = byCommunityPostWithParent.getContent();
+        // 2. 해당 최상위 댓글들의 대댓글 배치 조회
+        List<CommunityComment> replies = topLevelComments.isEmpty()
+                ? List.of()
+                : communityCommentRepository.findByParentIn(topLevelComments);
 
-        // 2. 해당 게시글의 작성자별 익명 닉네임 일괄 조회 (Map 변환)
+        // 3. 대댓글 그룹화 (부모 ID 기준)
+        Map<Long, List<CommunityComment>> replyMap = replies.stream()
+                .collect(Collectors.groupingBy(r -> r.getParent().getId()));
+
+        // 4. 닉네임 맵 (전체 댓글 + 대댓글 포함)
+        List<CommunityComment> allComments = new java.util.ArrayList<>(topLevelComments);
+        allComments.addAll(replies);
+
         Map<Long, String> nicknameMap = communityPostNicknameRepository
                 .findByCommunityPost(communityPost)
                 .stream()
@@ -107,23 +120,17 @@ public class CommunityCommentService {
                         (existing, replacement) -> existing
                 ));
 
-        // 3. 대댓글 그룹화 (부모 ID 기준 Map 변환)
-        Map<Long, List<CommunityComment>> replyMap = allComments.stream()
-                .filter(c -> c.getParent() != null)
-                .collect(Collectors.groupingBy(c -> c.getParent().getId()));
-
-        // 4. 댓글별 좋아요/싫어요 데이터 일괄 조회 및 그룹화
+        // 5. 좋아요/싫어요 맵
         Map<Long, List<CommunityCommentLike>> likeMap = communityCommentLikeRepository
                 .findByCommunityCommentIn(allComments)
                 .stream()
                 .collect(Collectors.groupingBy(cl -> cl.getCommunityComment().getId()));
 
-        // 5. 게시글 작성자 userId
+        // 6. 게시글 작성자 userId
         Long postAuthorId = communityPost.getUser().getId();
 
-        // 6. 최상위 댓글 필터링 및 대댓글 매핑을 포함한 DTO 변환
-        return allComments.stream()
-                .filter(c -> c.getParent() == null)
+        // 7. DTO 변환
+        List<CommentResponse> content = topLevelComments.stream()
                 .map(c -> CommentResponse.builder()
                         .id(c.getId())
                         .isDeleted(c.isDeleted())
@@ -152,6 +159,12 @@ public class CommunityCommentService {
                                 .toList())
                         .build())
                 .toList();
+
+        return CommentPageResponse.builder()
+                .comments(content)
+                .totalPages(topLevelPage.getTotalPages())
+                .currentPage(page)
+                .build();
     }
 
 

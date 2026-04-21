@@ -15,7 +15,7 @@ public interface CommunityCommentRepository extends JpaRepository<CommunityComme
 
     List<CommunityComment> findByParent(CommunityComment parent);
 
-    @Query("SELECT c FROM CommunityComment c LEFT JOIN FETCH c.parent WHERE c.communityPost = :communityPost")
-    Page<CommunityComment> findByCommunityPostWithParent(@Param("communityPost") CommunityPost communityPost,
-                                                         Pageable pageable);
+    Page<CommunityComment> findByCommunityPostAndParentIsNull(CommunityPost communityPost, Pageable pageable);
+
+    List<CommunityComment> findByParentIn(List<CommunityComment> parents);
 }

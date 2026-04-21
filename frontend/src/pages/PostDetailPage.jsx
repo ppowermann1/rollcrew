@@ -11,6 +11,7 @@ import { getComments, createComment, toggleCommentLike } from '../api/commentApi
 import { useAuth } from '../context/AuthContext';
 import { timeAgo } from '../utils/time';
 import { generateRandomNickname } from '../utils/randomNickname';
+import Pagination from '../components/common/Pagination';
 
 export default function PostDetailPage() {
   const { postId } = useParams();
@@ -19,6 +20,8 @@ export default function PostDetailPage() {
 
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
+  const [commPage, setCommPage] = useState(0);
+  const [commTotal, setCommTotal] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -44,10 +47,11 @@ export default function PostDetailPage() {
       try {
         const [postData, commentsData] = await Promise.all([
           getPost(postId),
-          getComments(postId),
+          getComments(postId, 0),
         ]);
         setPost(postData);
-        setComments(commentsData || []);
+        setComments(commentsData?.comments || []);
+        setCommTotal(commentsData?.totalPages || 1);
         setLikeCount(postData.likeCount || 0);
         setDislikeCount(postData.dislikeCount || 0);
       } catch (err) {
@@ -59,6 +63,19 @@ export default function PostDetailPage() {
     };
     fetchData();
   }, [postId]);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const data = await getComments(postId, commPage);
+        setComments(data?.comments || []);
+        setCommTotal(data?.totalPages || 1);
+      } catch (err) {
+        console.error('댓글 로딩 실패:', err);
+      }
+    };
+    fetchComments();
+  }, [postId, commPage]);
 
   const handleToggleLike = async () => {
     if (!isAuthenticated) { navigate('/login'); return; }
@@ -108,8 +125,9 @@ export default function PostDetailPage() {
       setCommentText('');
       setReplyTo(null);
       // 댓글 목록 새로고침
-      const updated = await getComments(postId);
-      setComments(updated || []);
+      const updated = await getComments(postId, commPage);
+      setComments(updated?.comments || []);
+      setCommTotal(updated?.totalPages || 1);
     } catch (err) {
       console.error('댓글 작성 실패:', err);
     } finally {
@@ -121,8 +139,9 @@ export default function PostDetailPage() {
     if (!isAuthenticated) { navigate('/login'); return; }
     try {
       await toggleCommentLike(commentId, likeType);
-      const updated = await getComments(postId);
-      setComments(updated || []);
+      const updated = await getComments(postId, commPage);
+      setComments(updated?.comments || []);
+      setCommTotal(updated?.totalPages || 1);
     } catch (err) {
       console.error('댓글 좋아요 실패:', err);
     }
@@ -412,6 +431,13 @@ export default function PostDetailPage() {
             />
           ))
         )}
+
+        {/* 댓글 페이지네이션 */}
+        <Pagination
+          currentPage={commPage}
+          totalPages={commTotal}
+          onPageChange={setCommPage}
+        />
       </div>
 
       {/* 답글 표시 */}

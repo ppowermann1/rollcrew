@@ -55,6 +55,16 @@ export default function JobRow({ job, onClick }) {
         WebkitBoxOrient: 'vertical', overflow: 'hidden',
         textDecoration: isOpen ? 'none' : 'line-through',
       }}>{job.content}</div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>
+          {job.authorName || '알 수 없음'}
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>·</span>
+        <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>
+          {timeAgo(job.createdAt)}
+        </span>
+      </div>
     </div>
   );
 }

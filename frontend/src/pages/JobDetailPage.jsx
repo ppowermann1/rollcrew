@@ -194,9 +194,26 @@ export default function JobDetailPage() {
           </div>
 
           <h1 style={{
-            margin: '0 0 16px', fontSize: 20, fontWeight: 800,
+            margin: '0 0 12px', fontSize: 20, fontWeight: 800,
             lineHeight: 1.35, letterSpacing: -0.5, color: 'var(--text)',
           }}>{job.title}</h1>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <div style={{
+              width: 26, height: 26, borderRadius: 8,
+              background: 'var(--accent)', color: 'var(--accent-ink)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 800, flexShrink: 0,
+            }}>
+              {job.authorName?.charAt(0) || '?'}
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+              {job.authorName || '알 수 없음'}
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+              {job.createdAt ? new Date(job.createdAt).toLocaleDateString('ko-KR') : ''}
+            </span>
+          </div>
 
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',

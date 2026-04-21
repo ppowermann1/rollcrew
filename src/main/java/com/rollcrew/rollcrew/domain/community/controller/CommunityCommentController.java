@@ -1,6 +1,7 @@
 package com.rollcrew.rollcrew.domain.community.controller;
 
 import com.rollcrew.rollcrew.domain.community.dto.CommentCreateRequest;
+import com.rollcrew.rollcrew.domain.community.dto.CommentPageResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
 import com.rollcrew.rollcrew.domain.community.entity.LikeType;
@@ -35,10 +36,10 @@ public class CommunityCommentController {
     }
 
     @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<List<CommentResponse>>> getComments(@PathVariable Long postId,
-                                                                          @RequestParam(defaultValue = "0") int page) {
-        List<CommentResponse> responses = communityCommentService.getComments(postId, page);
-        return ResponseEntity.ok(ApiResponse.ok(responses));
+    public ResponseEntity<ApiResponse<CommentPageResponse>> getComments(@PathVariable Long postId,
+                                                                        @RequestParam(defaultValue = "0") int page) {
+        CommentPageResponse response = communityCommentService.getComments(postId, page);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @PatchMapping("/{commentId}")
