@@ -37,7 +37,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         log.info("JWT: {}", token);
 
         //프론트로 redirect
-        String redirectUrl = "http://localhost:5173/oauth/callback?token=" + token;
+        String redirectUrl = "http://localhost:3000/?token=" + token;
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }

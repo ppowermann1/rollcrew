@@ -1,6 +1,7 @@
 package com.rollcrew.rollcrew.domain.community.service;
 
 import com.rollcrew.rollcrew.domain.community.dto.CommentCreateRequest;
+import com.rollcrew.rollcrew.domain.community.dto.CommentPageResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommentUpdateRequest;
 import com.rollcrew.rollcrew.domain.community.entity.*;
@@ -12,7 +13,6 @@ import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,10 +37,9 @@ public class CommunityCommentService {
     private final UserRepository userRepository;
     private final CommunityCommentLikeRepository communityCommentLikeRepository;
 
-    public CommentResponse createComments(Long postId, CommentCreateRequest request, CustomOAuth2User principal) {
+    public CommentResponse createComments(Long postId, CommentCreateRequest request, Long userId) {
 
-        Long id = principal.getUser().getId();
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
@@ -87,41 +86,51 @@ public class CommunityCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentResponse> getComments(Long postId, int page) {
+    public CommentPageResponse getComments(Long postId, int page) {
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").ascending());
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        Page<CommunityComment> byCommunityPostWithParent = communityCommentRepository.findByCommunityPostWithParent(communityPost, pageable);
+        // 1. 최상위 댓글만 페이징
+        Page<CommunityComment> topLevelPage = communityCommentRepository
+                .findByCommunityPostAndParentIsNull(communityPost, pageable);
+        List<CommunityComment> topLevelComments = topLevelPage.getContent();
 
-        // 1. 페이징된 결과에서 전체 댓글 리스트 추출
-        List<CommunityComment> allComments = byCommunityPostWithParent.getContent();
+        // 2. 해당 최상위 댓글들의 대댓글 배치 조회
+        List<CommunityComment> replies = topLevelComments.isEmpty()
+                ? List.of()
+                : communityCommentRepository.findByParentIn(topLevelComments);
 
-        // 2. 해당 게시글의 작성자별 익명 닉네임 일괄 조회 (Map 변환)
+        // 3. 대댓글 그룹화 (부모 ID 기준)
+        Map<Long, List<CommunityComment>> replyMap = replies.stream()
+                .collect(Collectors.groupingBy(r -> r.getParent().getId()));
+
+        // 4. 닉네임 맵 (전체 댓글 + 대댓글 포함)
+        List<CommunityComment> allComments = new java.util.ArrayList<>(topLevelComments);
+        allComments.addAll(replies);
+
         Map<Long, String> nicknameMap = communityPostNicknameRepository
-                .findAuthorNicknameByCommunityPost(communityPost)
+                .findByCommunityPost(communityPost)
                 .stream()
                 .collect(Collectors.toMap(
                         n -> n.getUser().getId(),
-                        CommunityPostNickname::getNickname
+                        CommunityPostNickname::getNickname,
+                        (existing, replacement) -> existing
                 ));
 
-        // 3. 대댓글 그룹화 (부모 ID 기준 Map 변환)
-        Map<Long, List<CommunityComment>> replyMap = allComments.stream()
-                .filter(c -> c.getParent() != null)
-                .collect(Collectors.groupingBy(c -> c.getParent().getId()));
-
-        // 4. 댓글별 좋아요/싫어요 데이터 일괄 조회 및 그룹화
+        // 5. 좋아요/싫어요 맵
         Map<Long, List<CommunityCommentLike>> likeMap = communityCommentLikeRepository
                 .findByCommunityCommentIn(allComments)
                 .stream()
                 .collect(Collectors.groupingBy(cl -> cl.getCommunityComment().getId()));
 
-        // 5. 최상위 댓글 필터링 및 대댓글 매핑을 포함한 DTO 변환
-        return allComments.stream()
-                .filter(c -> c.getParent() == null)
+        // 6. 게시글 작성자 userId
+        Long postAuthorId = communityPost.getUser().getId();
+
+        // 7. DTO 변환
+        List<CommentResponse> content = topLevelComments.stream()
                 .map(c -> CommentResponse.builder()
                         .id(c.getId())
                         .isDeleted(c.isDeleted())
@@ -132,6 +141,7 @@ public class CommunityCommentService {
                         .content(c.getContent())
                         .nickname(nicknameMap.getOrDefault(c.getUser().getId(), "Unknown"))
                         .createdAt(c.getCreatedAt())
+                        .isAuthor(postAuthorId.equals(c.getUser().getId()))
                         .replies(replyMap.getOrDefault(c.getId(), List.of()).stream()
                                 .map(reply -> CommentResponse.builder()
                                         .id(reply.getId())
@@ -144,19 +154,26 @@ public class CommunityCommentService {
                                                 .filter(cl -> cl.getLikeType() == LikeType.DISLIKE).count())
                                         .replies(List.of())
                                         .isDeleted(reply.isDeleted())
+                                        .isAuthor(postAuthorId.equals(reply.getUser().getId()))
                                         .build())
                                 .toList())
                         .build())
                 .toList();
+
+        return CommentPageResponse.builder()
+                .comments(content)
+                .totalPages(topLevelPage.getTotalPages())
+                .currentPage(page)
+                .build();
     }
 
 
-    public CommentResponse updateComment(Long commentId, @Valid CommentUpdateRequest request, CustomOAuth2User principal) {
+    public CommentResponse updateComment(Long commentId, @Valid CommentUpdateRequest request, Long userId) {
 
         CommunityComment communityComment = communityCommentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        User user = userRepository.findById(principal.getUser().getId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 
@@ -184,8 +201,8 @@ public class CommunityCommentService {
     }
 
     @Transactional
-    public void deleteComment(Long commentId, CustomOAuth2User principal) {
-        User user = userRepository.findById(principal.getUser().getId()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    public void deleteComment(Long commentId, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityComment comment = communityCommentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
@@ -198,9 +215,9 @@ public class CommunityCommentService {
     }
 
     @Transactional
-    public void toggleCommentLike(Long commentId, LikeType likeType, CustomOAuth2User principal) {
+    public void toggleCommentLike(Long commentId, LikeType likeType, Long userId) {
 
-        User user = userRepository.findById(principal.getUser().getId()).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityComment communityComment = communityCommentRepository.findById(commentId).orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 

@@ -23,4 +23,6 @@ public class CommentResponse {
 
     private long likeCount;
     private long dislikeCount;
+
+    private Boolean isAuthor;
 }

@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**", "/oauth2/**", "/login/**",
                                 "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/posts", "/api/job-postings").permitAll()
                         .anyRequest().authenticated()
                 );
 

@@ -14,6 +14,7 @@ public class JobPostingResponse {
 
     private Long id;
     private Long userId;
+    private String authorName;
     private String title;
     private String content;
     private JobCategory category;
@@ -26,6 +27,7 @@ public class JobPostingResponse {
         return JobPostingResponse.builder()
                 .id(jobPost.getId())
                 .userId(jobPost.getUser().getId())
+                .authorName(jobPost.getUser().getNickname())
                 .title(jobPost.getTitle())
                 .content(jobPost.getContent())
                 .category(jobPost.getCategory())

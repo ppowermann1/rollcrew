@@ -32,7 +32,7 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
   datasource:
-    url: jdbc:h2:mem:rollcrew
+    url: jdbc:h2:file:~/rollcrew-db  # 파일 모드
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -41,11 +41,7 @@ spring:
       enabled: true
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+      ddl-auto: update  # create 면 매번 날아가니까 update로
 jwt:
   secret: rollcrew-secret-key-must-be-at-least-32-characters-long
   expiration: 86400000

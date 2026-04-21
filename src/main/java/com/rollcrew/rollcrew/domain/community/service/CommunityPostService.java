@@ -13,16 +13,15 @@ import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
 import com.rollcrew.rollcrew.global.exception.ErrorCode;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -38,9 +37,9 @@ public class CommunityPostService {
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityPostImageRepository communityPostImageRepository;
 
-    public Long createPost(CustomOAuth2User principal, CommunityPostRequest request) {
+    public Long createPost(Long userId, CommunityPostRequest request) {
 
-        User user = userRepository.findById(principal.getUser().getId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost createdPost = CommunityPost.builder()
@@ -66,8 +65,10 @@ public class CommunityPostService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CommunityPostListResponse> getPostList(Pageable pageable) {
-        Page<CommunityPost> posts = communityPostRepository.findAll(pageable);
+    public Page<CommunityPostListResponse> getPostList(CommunityCategory communityCategory, Pageable pageable) {
+        Page<CommunityPost> posts = communityCategory != null
+                ? communityPostRepository.findByCommunityCategory(communityCategory, pageable)
+                : communityPostRepository.findAll(pageable);
         List<CommunityPost> postList = posts.getContent();
 
         Map<Long, List<CommunityPostLike>> likeMap = communityPostLikeRepository
@@ -96,6 +97,8 @@ public class CommunityPostService {
                 .filter(pl -> pl.getLikeType() == LikeType.DISLIKE).count();
 
         return CommunityPostListResponse.builder()
+                .id(post.getId())
+                .communityCategory(post.getCommunityCategory())
                 .title(post.getTitle())
                 .nickname(nickname)
                 .createdAt(post.getCreatedAt())
@@ -110,7 +113,8 @@ public class CommunityPostService {
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        CommunityPostNickname communityPostNickname = communityPostNicknameRepository.findAuthorNicknameByCommunityPost(communityPost)
+        CommunityPostNickname communityPostNickname = communityPostNicknameRepository
+                .findByUserAndCommunityPost(communityPost.getUser(), communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
         long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);
@@ -122,10 +126,13 @@ public class CommunityPostService {
                 .toList();
 
         return CommunityPostResponse.builder()
+                .id(communityPost.getId())
+                .userId(communityPost.getUser().getId())
                 .title(communityPost.getTitle())
                 .nickname(communityPostNickname.getNickname())
                 .content(communityPost.getContent())
                 .imageURL(imageUrls)
+                .communityCategory(communityPost.getCommunityCategory())
                 .createdAt(communityPost.getCreatedAt())
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)
@@ -145,14 +152,28 @@ public class CommunityPostService {
         communityPost.updatePost(request.getTitle(), request.getContent());
 
         CommunityPostNickname communityPostNickname = communityPostNicknameRepository
-                .findAuthorNicknameByCommunityPost(communityPost)
+                .findByUserAndCommunityPost(communityPost.getUser(), communityPost)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NICKNAME_NOT_FOUND));
 
+        long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);
+        long dislikeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.DISLIKE);
+
+        List<String> imageUrls = communityPostImageRepository.findByCommunityPost(communityPost)
+                .stream()
+                .map(CommunityPostImage::getImageUrl)
+                .toList();
+
         return CommunityPostResponse.builder()
+                .id(communityPost.getId())
+                .userId(communityPost.getUser().getId())
                 .title(communityPost.getTitle())
                 .nickname(communityPostNickname.getNickname())
                 .content(communityPost.getContent())
+                .imageURL(imageUrls)
+                .communityCategory(communityPost.getCommunityCategory())
                 .createdAt(communityPost.getCreatedAt())
+                .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
                 .build();
     }
 
@@ -168,8 +189,8 @@ public class CommunityPostService {
         communityPostRepository.delete(communityPost);
     }
 
-    public void togglePostLike(Long postId, LikeType likeType, CustomOAuth2User principal) {
-        User user = userRepository.findById(principal.getUser().getId())
+    public void togglePostLike(Long postId, LikeType likeType, Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
@@ -198,5 +219,32 @@ public class CommunityPostService {
                             .likeType(likeType)
                             .build());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CommunityPostListResponse> getMyPosts(Long userId, Pageable pageable) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Page<CommunityPost> posts = communityPostRepository.findByUser(user, pageable);
+
+        List<CommunityPost> postList = posts.getContent();
+
+        Map<Long, List<CommunityPostLike>> likeMap = communityPostLikeRepository
+                .findByCommunityPostIn(postList)
+                .stream()
+                .collect(Collectors.groupingBy(pl -> pl.getCommunityPost().getId()));
+
+        Map<Long, String> nicknameMap = communityPostNicknameRepository
+                .findByCommunityPostIn(postList)
+                .stream()
+                .collect(Collectors.toMap(
+                        n -> n.getCommunityPost().getId(),
+                        CommunityPostNickname::getNickname,
+                        (existing, replacement) -> existing
+                ));
+
+        return posts.map(post -> toListResponse(post, likeMap, nicknameMap));
     }
 }

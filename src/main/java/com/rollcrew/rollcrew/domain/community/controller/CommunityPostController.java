@@ -3,10 +3,10 @@ package com.rollcrew.rollcrew.domain.community.controller;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostListResponse;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostRequest;
 import com.rollcrew.rollcrew.domain.community.dto.CommunityPostResponse;
+import com.rollcrew.rollcrew.domain.community.entity.CommunityCategory;
 import com.rollcrew.rollcrew.domain.community.entity.LikeType;
 import com.rollcrew.rollcrew.domain.community.service.CommunityPostService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
-import com.rollcrew.rollcrew.global.security.CustomOAuth2User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,17 +25,18 @@ public class CommunityPostController {
     private final CommunityPostService communityPostService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> createPost(@AuthenticationPrincipal CustomOAuth2User principal,
+    public ResponseEntity<ApiResponse<Long>> createPost(@AuthenticationPrincipal Long userId,
                                                         @RequestBody CommunityPostRequest request) {
-        Long response = communityPostService.createPost(principal, request);
+        Long response = communityPostService.createPost(userId, request);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<CommunityPostListResponse>>> getCommunityPostList(
+            @RequestParam(required = false) CommunityCategory communityCategory,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<CommunityPostListResponse> responses = communityPostService.getPostList(pageable);
+        Page<CommunityPostListResponse> responses = communityPostService.getPostList(communityCategory, pageable);
         return ResponseEntity.ok().body(ApiResponse.ok(responses));
     }
 
@@ -49,8 +50,8 @@ public class CommunityPostController {
     @PostMapping("/{postId}/like")
     public ResponseEntity<ApiResponse<Void>> togglePostLike(@PathVariable Long postId,
                                                             @RequestParam LikeType likeType,
-                                                            @AuthenticationPrincipal CustomOAuth2User principal) {
-        communityPostService.togglePostLike(postId, likeType, principal);
+                                                            @AuthenticationPrincipal Long userId) {
+        communityPostService.togglePostLike(postId, likeType, userId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
@@ -58,18 +59,27 @@ public class CommunityPostController {
     public ResponseEntity<ApiResponse<CommunityPostResponse>> updatePost(
             @PathVariable Long postId,
             @RequestBody @Valid CommunityPostRequest request,
-            @AuthenticationPrincipal CustomOAuth2User principal) {
+            @AuthenticationPrincipal Long userId) {
 
-        CommunityPostResponse response = communityPostService.updatePost(postId, request, principal.getUser().getId());
+        CommunityPostResponse response = communityPostService.updatePost(postId, request, userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
-            @AuthenticationPrincipal CustomOAuth2User principal) {
+            @AuthenticationPrincipal Long userId) {
 
-        communityPostService.deletePost(postId, principal.getUser().getId());
+        communityPostService.deletePost(postId, userId);
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Page<CommunityPostListResponse>>> getMyPosts(
+            @AuthenticationPrincipal Long userId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<CommunityPostListResponse> responses = communityPostService.getMyPosts(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 }
