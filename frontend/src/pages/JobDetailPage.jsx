@@ -41,6 +41,8 @@ export default function JobDetailPage() {
   // 지원자 목록 (작성자 — 인라인)
   const [applicants, setApplicants] = useState([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [acceptedName, setAcceptedName] = useState('');
 
   const textareaRef = useRef(null);
 
@@ -102,12 +104,27 @@ export default function JobDetailPage() {
     }
   };
 
-  const handleApplyStatus = async (applyId, status) => {
+  const handleApplyStatus = async (applyId, status, applicantNickname) => {
     try {
       const updated = await updateApplyStatus(applyId, status);
       setApplicants(prev => prev.map(a => a.applyId === applyId ? updated : a));
+      if (status === 'ACCEPTED') {
+        setAcceptedName(applicantNickname || '지원자');
+        setShowCloseModal(true);
+      }
     } catch {
       showToast('상태 변경에 실패했습니다.');
+    }
+  };
+
+  const handleCloseJob = async () => {
+    try {
+      await updateJobPosting(jobId, { ...job, status: 'CLOSED' });
+      setJob(prev => ({ ...prev, status: 'CLOSED' }));
+    } catch {
+      showToast('마감 처리에 실패했습니다.');
+    } finally {
+      setShowCloseModal(false);
     }
   };
 
@@ -324,7 +341,7 @@ export default function JobDetailPage() {
                   {a.status === 'PENDING' && (
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
-                        onClick={() => handleApplyStatus(a.applyId, 'ACCEPTED')}
+                        onClick={() => handleApplyStatus(a.applyId, 'ACCEPTED', a.applicantNickname)}
                         style={{
                           flex: 1, height: 36, borderRadius: 8, border: 'none',
                           background: 'rgba(91,212,166,0.13)', color: 'var(--success)',
@@ -332,7 +349,7 @@ export default function JobDetailPage() {
                         }}
                       >수락</button>
                       <button
-                        onClick={() => handleApplyStatus(a.applyId, 'REJECTED')}
+                        onClick={() => handleApplyStatus(a.applyId, 'REJECTED', null)}
                         style={{
                           flex: 1, height: 36, borderRadius: 8, border: 'none',
                           background: 'rgba(255,107,107,0.1)', color: 'var(--danger)',
@@ -480,6 +497,51 @@ export default function JobDetailPage() {
                 fontFamily: 'var(--font-sans)', letterSpacing: -0.3,
               }}
             >{applying ? '지원 중...' : '지원하기'}</button>
+          </div>
+        </>
+      )}
+
+      {/* 수락 후 마감 여부 모달 */}
+      {showCloseModal && (
+        <>
+          <div
+            onClick={() => setShowCloseModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(2px)' }}
+          />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 480, background: 'var(--surface)',
+            borderTopLeftRadius: 20, borderTopRightRadius: 20,
+            padding: '28px 20px 40px', zIndex: 101,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>✅</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 6 }}>
+                {acceptedName}님을 수락했어요!
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                추가 인원이 필요하신가요?
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowCloseModal(false)}
+                style={{
+                  flex: 1, height: 50, borderRadius: 12, border: '1.5px solid var(--border)',
+                  background: 'transparent', color: 'var(--text)',
+                  fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                }}
+              >계속 모집</button>
+              <button
+                onClick={handleCloseJob}
+                style={{
+                  flex: 1, height: 50, borderRadius: 12, border: 'none',
+                  background: 'var(--accent)', color: 'var(--accent-ink)',
+                  fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                }}
+              >마감하기</button>
+            </div>
           </div>
         </>
       )}
