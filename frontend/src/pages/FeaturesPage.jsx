@@ -8,7 +8,15 @@ const FEATURES = [
     title: '견적서 작성',
     desc: '촬영 견적서를 빠르게 작성하고 공유해보세요',
     url: 'https://tltgogo.netlify.app',
-    accent: 'var(--accent)',
+    comingSoon: false,
+  },
+  {
+    id: 'suggestion',
+    icon: '💬',
+    title: '건의하기',
+    desc: '서비스 개선 아이디어나 불편한 점을 알려주세요',
+    url: null,
+    comingSoon: true,
   },
 ];
 
@@ -31,14 +39,16 @@ export default function FeaturesPage() {
           {FEATURES.map(f => (
             <button
               key={f.id}
-              onClick={() => window.open(f.url, '_blank')}
+              onClick={() => !f.comingSoon && f.url && window.open(f.url, '_blank')}
               style={{
                 width: '100%', padding: '18px 20px',
                 background: 'var(--bg-elevated)',
                 border: '1px solid var(--border)',
-                borderRadius: 16, cursor: 'pointer',
+                borderRadius: 16,
+                cursor: f.comingSoon ? 'default' : 'pointer',
                 display: 'flex', alignItems: 'center', gap: 16,
                 textAlign: 'left',
+                opacity: f.comingSoon ? 0.6 : 1,
               }}
             >
               <div style={{
@@ -56,10 +66,18 @@ export default function FeaturesPage() {
                   fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5,
                 }}>{f.desc}</div>
               </div>
-              <div style={{
-                fontSize: 12, fontWeight: 700, color: 'var(--accent)',
-                flexShrink: 0,
-              }}>열기 →</div>
+              <div style={{ flexShrink: 0 }}>
+                {f.comingSoon ? (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700,
+                    color: 'var(--text-faint)',
+                    padding: '4px 8px', borderRadius: 6,
+                    background: 'var(--surface)',
+                  }}>Coming Soon</span>
+                ) : (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>열기 →</span>
+                )}
+              </div>
             </button>
           ))}
         </div>
