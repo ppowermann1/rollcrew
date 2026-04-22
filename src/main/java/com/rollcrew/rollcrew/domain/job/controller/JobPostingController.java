@@ -3,6 +3,7 @@ package com.rollcrew.rollcrew.domain.job.controller;
 import com.rollcrew.rollcrew.domain.job.dto.JobPostingRequest;
 import com.rollcrew.rollcrew.domain.job.dto.JobPostingResponse;
 import com.rollcrew.rollcrew.domain.job.dto.JobPostingUpdateRequest;
+import com.rollcrew.rollcrew.domain.job.entity.PostStatus;
 import com.rollcrew.rollcrew.domain.job.service.JobPostingService;
 import com.rollcrew.rollcrew.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +33,9 @@ public class JobPostingController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<JobPostingResponse>>> getJobPostings(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<JobPostingResponse> response = jobPostingService.getJobPostings(pageable);
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) PostStatus status) {
+        Page<JobPostingResponse> response = jobPostingService.getJobPostings(pageable, status);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

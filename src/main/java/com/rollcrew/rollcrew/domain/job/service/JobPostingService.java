@@ -4,6 +4,7 @@ import com.rollcrew.rollcrew.domain.job.dto.JobPostingRequest;
 import com.rollcrew.rollcrew.domain.job.dto.JobPostingResponse;
 import com.rollcrew.rollcrew.domain.job.dto.JobPostingUpdateRequest;
 import com.rollcrew.rollcrew.domain.job.entity.JobPost;
+import com.rollcrew.rollcrew.domain.job.entity.PostStatus;
 import com.rollcrew.rollcrew.domain.job.repository.JobPostRepository;
 import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
@@ -46,9 +47,16 @@ public class JobPostingService {
         return JobPostingResponse.from(jobPost);
     }
 
-    public Page<JobPostingResponse> getJobPostings(Pageable pageable) {
-        return jobPostRepository.findAll(pageable)
-                .map(JobPostingResponse::from);
+
+    /// 여기
+    public Page<JobPostingResponse> getJobPostings(Pageable pageable, PostStatus status) {
+        if (status == null) {
+            return jobPostRepository.findAll(pageable)
+                    .map(JobPostingResponse::from);
+        }
+
+        Page<JobPost> byStatus = jobPostRepository.findByStatus(status, pageable);
+        return byStatus.map(JobPostingResponse::from);
     }
 
     public JobPostingResponse updateJobPosting(Long userId, Long jobPostId, JobPostingUpdateRequest request) {
