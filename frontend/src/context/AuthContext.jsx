@@ -45,7 +45,8 @@ export function AuthProvider({ children }) {
   }, [fetchUser]);
 
   const login = (provider = 'naver') => {
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    window.location.href = `${baseUrl}/oauth2/authorization/${provider}`;
   };
 
   const loginWithToken = async (token) => {
