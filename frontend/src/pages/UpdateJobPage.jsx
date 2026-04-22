@@ -64,6 +64,12 @@ export default function UpdateJobPage() {
 
   const hasValidDate = isRange ? (dates[0] && endDate) : dates.some(d => d.trim() !== '');
 
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const isPastDate = (d) => d && new Date(d) < today;
+  const pastDateWarn = isRange
+    ? isPastDate(dates[0])
+    : dates.some(d => isPastDate(d));
+
   const addDate = () => {
     if (dates.length < 5) setDates([...dates, '']);
   };
@@ -83,7 +89,7 @@ export default function UpdateJobPage() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim() || !hasValidDate || submitting) return;
+    if (!title.trim() || !content.trim() || !hasValidDate || pastDateWarn || submitting) return;
     if (!isAuthenticated) { navigate('/login'); return; }
 
     setSubmitting(true);
@@ -126,11 +132,11 @@ export default function UpdateJobPage() {
         <button
           id="btn-submit-job"
           onClick={handleSubmit}
-          disabled={!title.trim() || !content.trim() || !hasValidDate || submitting}
+          disabled={!title.trim() || !content.trim() || !hasValidDate || pastDateWarn || submitting}
           style={{
             padding: '8px 16px', borderRadius: 8,
-            background: title.trim() && content.trim() && hasValidDate ? 'var(--accent)' : 'var(--surface)',
-            color: title.trim() && content.trim() && hasValidDate ? 'var(--accent-ink)' : 'var(--text-faint)',
+            background: title.trim() && content.trim() && hasValidDate && !pastDateWarn ? 'var(--accent)' : 'var(--surface)',
+            color: title.trim() && content.trim() && hasValidDate && !pastDateWarn ? 'var(--accent-ink)' : 'var(--text-faint)',
             fontSize: 13, fontWeight: 700,
             transition: 'all var(--transition-fast)',
           }}
@@ -219,7 +225,10 @@ export default function UpdateJobPage() {
                 <input
                   type="date"
                   value={dates[0] || ''}
-                  onChange={e => updateDate(0, e.target.value)}
+                  onChange={e => {
+                    updateDate(0, e.target.value);
+                    if (endDate && e.target.value > endDate) setEndDate('');
+                  }}
                   style={{
                     flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
                     background: 'var(--surface)', border: '1px solid var(--border)',
@@ -230,6 +239,7 @@ export default function UpdateJobPage() {
                 <input
                   type="date"
                   value={endDate || ''}
+                  min={dates[0] || undefined}
                   onChange={e => setEndDate(e.target.value)}
                   style={{
                     flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
@@ -265,18 +275,29 @@ export default function UpdateJobPage() {
                   </div>
                 ))}
                 {dates.length < 5 && (
-                  <button 
-                    onClick={addDate} 
-                    style={{ 
-                      width: '100%', height: 44, borderRadius: 10, 
-                      background: 'var(--bg-sunken)', border: '1px dashed var(--border)', 
-                      color: 'var(--text-muted)', fontSize: 13, fontWeight: 700, cursor: 'pointer' 
+                  <button
+                    onClick={addDate}
+                    style={{
+                      width: '100%', height: 44, borderRadius: 10,
+                      background: 'var(--bg-sunken)', border: '1px dashed var(--border)',
+                      color: 'var(--text-muted)', fontSize: 13, fontWeight: 700, cursor: 'pointer'
                     }}
                   >+ 날짜 추가</button>
                 )}
               </>
             )}
           </div>
+          {pastDateWarn && (
+            <div style={{
+              marginTop: 10, padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.35)',
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 13, color: '#e6ac00',
+            }}>
+              <span>⚠️</span>
+              <span>이미 지난 날짜입니다. 확인 후 수정해주세요.</span>
+            </div>
+          )}
         </div>
 
         {/* 본문 */}

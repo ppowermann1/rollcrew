@@ -77,6 +77,20 @@ export const updateApplyStatus = async (applyId, status) => {
 };
 
 /**
+ * 내 지원 현황 조회
+ * 지원한 적 없으면 null 반환
+ */
+export const getMyApply = async (jobPostId) => {
+  try {
+    const res = await client.get(`/api/job-postings/${jobPostId}/applied`);
+    return res.data.data;
+  } catch (err) {
+    if (err.response?.status === 404) return null;
+    throw err;
+  }
+};
+
+/**
  * 지원 취소 (지원자 본인)
  */
 export const cancelApply = async (applyId) => {
