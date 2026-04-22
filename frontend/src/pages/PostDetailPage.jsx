@@ -5,7 +5,8 @@ import Avatar from '../components/common/Avatar';
 import IconBtn from '../components/common/IconBtn';
 import ShotPlaceholder from '../components/common/ShotPlaceholder';
 import CommentItem from '../components/community/CommentItem';
-import { IconBack, IconMore, IconThumbUp, IconThumbDown, IconShare, IconPlus } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
+import { IconMore, IconThumbUp, IconThumbDown, IconShare, IconPlus } from '../components/common/Icons';
 import { getPost, togglePostLike, updatePost, deletePost } from '../api/communityApi';
 import { getComments, createComment, toggleCommentLike } from '../api/commentApi';
 import { useAuth } from '../context/AuthContext';
@@ -162,7 +163,7 @@ export default function PostDetailPage() {
           display: 'flex', alignItems: 'center', padding: '10px 16px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
+          <BackBtn onClick={() => navigate('/', { state: { tab: 'community' } })} />
         </div>
         <div className="empty-state">
           <div className="empty-icon">😥</div>
@@ -220,7 +221,7 @@ export default function PostDetailPage() {
         background: 'var(--bg)',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate('/', { state: { tab: 'community' } })} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>커뮤니티</div>

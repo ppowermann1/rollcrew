@@ -1,8 +1,7 @@
 // CreateJobPage — 구인구직 작성
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import IconBtn from '../components/common/IconBtn';
-import { IconBack } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
 import { createJobPosting } from '../api/jobApi';
 import { useAuth } from '../context/AuthContext';
 
@@ -89,7 +88,7 @@ export default function CreateJobPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate('/', { state: { tab: 'job' } })} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>구인구직 등록</div>

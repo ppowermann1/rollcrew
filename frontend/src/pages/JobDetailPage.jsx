@@ -2,10 +2,26 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
-import { IconBack, IconMore } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
+import { IconMore } from '../components/common/Icons';
 import { getJobPosting, deleteJobPosting, updateJobPosting, createApply, getApplies, updateApplyStatus, cancelApply, getMyApply } from '../api/jobApi';
 import { getProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
+
+const isPastShootingDate = (shootingDates) => {
+  if (!shootingDates) return false;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let lastDate;
+  if (shootingDates.includes('~')) {
+    lastDate = new Date(shootingDates.split('~')[1].trim());
+  } else if (shootingDates.includes(',')) {
+    const parts = shootingDates.split(',').map(d => new Date(d.trim()));
+    lastDate = new Date(Math.max(...parts));
+  } else {
+    lastDate = new Date(shootingDates.trim());
+  }
+  return !isNaN(lastDate) && lastDate < today;
+};
 
 const fmtDate = (s) => {
   const d = new Date(s.trim());
@@ -50,6 +66,7 @@ export default function JobDetailPage() {
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [acceptedName, setAcceptedName] = useState('');
   const [confirmApply, setConfirmApply] = useState(null); // { applyId, applicantNickname, message }
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const textareaRef = useRef(null);
 
@@ -109,10 +126,11 @@ export default function JobDetailPage() {
   };
 
   const handleCancelApply = async () => {
-    if (!myApply || !window.confirm('지원을 취소하시겠습니까?')) return;
+    if (!myApply) return;
     try {
       await cancelApply(myApply.applyId);
       setMyApply(null);
+      setConfirmCancel(false);
       showToast('지원이 취소되었습니다');
     } catch {
       showToast('지원 취소에 실패했습니다.');
@@ -188,7 +206,7 @@ export default function JobDetailPage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
-          <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
+          <BackBtn onClick={() => navigate('/', { state: { tab: 'job' } })} />
         </div>
         <div className="empty-state">
           <div className="empty-icon">😥</div>
@@ -211,9 +229,9 @@ export default function JobDetailPage() {
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate('/', { state: { tab: 'job' } })} />
         <div style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>구인구직</div>
-        {isAuthor
+        {isAuthor && isOpen && !isPastShootingDate(job.shootingDates)
           ? <IconBtn onClick={() => setShowActionSheet(true)}><IconMore size={20} /></IconBtn>
           : <div style={{ width: 44 }} />
         }
@@ -338,7 +356,7 @@ export default function JobDetailPage() {
 
                   {/* 지원 취소 버튼 */}
                   <button
-                    onClick={handleCancelApply}
+                    onClick={() => setConfirmCancel(true)}
                     style={{
                       width: '100%', height: 42, borderRadius: 10, border: 'none',
                       background: 'rgba(255,107,107,0.1)', color: 'var(--danger)',
@@ -500,6 +518,52 @@ export default function JobDetailPage() {
 
       {/* 토스트 */}
       {toast && <div className="toast">{toast}</div>}
+
+      {/* 지원 취소 확인 모달 */}
+      {confirmCancel && (
+        <>
+          <div
+            onClick={() => setConfirmCancel(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, backdropFilter: 'blur(2px)' }}
+          />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 480, background: 'var(--surface)',
+            borderTopLeftRadius: 20, borderTopRightRadius: 20,
+            padding: '28px 20px 40px', zIndex: 101,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>
+                지원을 취소하시겠습니까?
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                취소 후 다시 지원할 수 있습니다
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setConfirmCancel(false)}
+                style={{
+                  flex: 1, height: 50, borderRadius: 12,
+                  border: '1.5px solid var(--border)', background: 'transparent',
+                  color: 'var(--text)', fontSize: 15, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                }}
+              >닫기</button>
+              <button
+                onClick={handleCancelApply}
+                style={{
+                  flex: 1, height: 50, borderRadius: 12, border: 'none',
+                  background: 'rgba(255,107,107,0.15)', color: 'var(--danger)',
+                  fontSize: 15, fontWeight: 800, cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >취소하기</button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 지원하기 바텀시트 */}
       {showApplySheet && (
@@ -729,14 +793,18 @@ export default function JobDetailPage() {
             boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
           }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 16 }}>게시글 관리</div>
-            <button
-              onClick={handleToggleStatus}
-              style={{ width: '100%', padding: '16px', background: 'var(--bg)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
-            >{isOpen ? '마감하기' : '모집중으로 변경'}</button>
-            <button
-              onClick={() => navigate(`/jobs/${jobId}/edit`)}
-              style={{ width: '100%', padding: '16px', background: 'var(--bg)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
-            >수정하기</button>
+            {isOpen && !isPastShootingDate(job.shootingDates) && (
+              <>
+                <button
+                  onClick={handleToggleStatus}
+                  style={{ width: '100%', padding: '16px', background: 'var(--bg)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+                >마감하기</button>
+                <button
+                  onClick={() => navigate(`/jobs/${jobId}/edit`)}
+                  style={{ width: '100%', padding: '16px', background: 'var(--bg)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+                >수정하기</button>
+              </>
+            )}
             <button
               onClick={handleDelete}
               style={{ width: '100%', padding: '16px', background: 'rgba(255,107,107,0.1)', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: 'var(--danger)', marginBottom: 16, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/common/Avatar';
 import Header from '../components/layout/Header';
 import IconBtn from '../components/common/IconBtn';
-import { IconLogout, IconBack } from '../components/common/Icons';
+import { IconLogout } from '../components/common/Icons';
 import { getProfile, updateProfile } from '../api/userApi';
 
 export default function ProfilePage() {
@@ -227,26 +227,6 @@ export default function ProfilePage() {
 
         {/* 메뉴 */}
         <div style={{ margin: '16px 20px 0' }}>
-          <div style={{
-            background: 'var(--bg-elevated)', borderRadius: 12,
-            border: '1px solid var(--border)', overflow: 'hidden',
-          }}>
-            <div
-              onClick={() => navigate('/profile/posts')}
-              style={{
-                padding: '14px 16px',
-                display: 'flex', alignItems: 'center', gap: 10,
-                cursor: 'pointer',
-                borderBottom: '1px solid var(--border)',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>📝</span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                내 게시글
-              </span>
-              <IconBack size={16} color="var(--text-faint)" style={{ transform: 'rotate(180deg)' }} />
-            </div>
-          </div>
         </div>
 
         {/* 로그아웃 */}

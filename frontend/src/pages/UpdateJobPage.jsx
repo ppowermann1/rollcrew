@@ -1,8 +1,7 @@
 // UpdateJobPage — 구인구직 수정
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import IconBtn from '../components/common/IconBtn';
-import { IconBack } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
 import { getJobPosting, updateJobPosting } from '../api/jobApi';
 import { useAuth } from '../context/AuthContext';
 
@@ -125,7 +124,7 @@ export default function UpdateJobPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate(-1)} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>구인구직 수정</div>

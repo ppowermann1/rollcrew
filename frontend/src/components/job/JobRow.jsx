@@ -66,11 +66,11 @@ export default function JobRow({ job, onClick }) {
 
   return (
     <div
-      onClick={() => !isDisabled && onClick && onClick(job)}
+      onClick={() => onClick && onClick(job)}
       style={{
         padding: '16px 20px',
         borderBottom: '1px solid var(--border)',
-        cursor: isDisabled ? 'default' : 'pointer',
+        cursor: 'pointer',
         opacity: isDisabled ? 0.4 : 1,
         transition: 'background var(--transition-fast)',
       }}

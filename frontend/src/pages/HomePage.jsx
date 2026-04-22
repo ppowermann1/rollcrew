@@ -36,6 +36,7 @@ export default function HomePage() {
   const [commTotal, setCommTotal] = useState(1);
   const [jobPage, setJobPage] = useState(0);
   const [jobTotal, setJobTotal] = useState(1);
+  const [jobStatusFilter, setJobStatusFilter] = useState('OPEN');
 
   const [posts, setPosts] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -52,7 +53,7 @@ export default function HomePage() {
         setPosts(data.content || data || []);
         setCommTotal(data.totalPages || 1);
       } else {
-        const data = await getJobPostings(jobPage, 20);
+        const data = await getJobPostings(jobPage, 20, jobStatusFilter);
         setJobs(data.content || data || []);
         setJobTotal(data.totalPages || 1);
       }
@@ -68,7 +69,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [tab, commPage, jobPage, activeCat]);
+  }, [tab, commPage, jobPage, activeCat, jobStatusFilter]);
 
   useEffect(() => {
     fetchData();
@@ -142,6 +143,21 @@ export default function HomePage() {
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg)',
       }}>
+        {tab === 'job' && (
+          <button
+            onClick={() => { setJobStatusFilter(v => v === 'OPEN' ? null : 'OPEN'); setJobPage(0); }}
+            style={{
+              height: 34, padding: '0 12px', whiteSpace: 'nowrap', flexShrink: 0,
+              border: `1.5px solid ${jobStatusFilter === 'OPEN' ? 'var(--success)' : 'var(--border)'}`,
+              borderRadius: 17,
+              background: jobStatusFilter === 'OPEN' ? 'rgba(91,212,166,0.13)' : 'transparent',
+              color: jobStatusFilter === 'OPEN' ? 'var(--success)' : 'var(--text-muted)',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              transition: 'all var(--transition-fast)',
+            }}
+          >{jobStatusFilter === 'OPEN' ? '● 모집중' : '전체'}</button>
+        )}
         {(tab === 'community' ? COMMUNITY_CATEGORIES : JOB_CATEGORIES).map(c => {
           const isActive = tab === 'community'
             ? activeCat === c.id

@@ -4,8 +4,10 @@ import client from './client';
 /**
  * 구인구직 목록 조회 (페이지네이션)
  */
-export const getJobPostings = async (page = 0, size = 20) => {
-  const res = await client.get('/api/job-postings', { params: { page, size } });
+export const getJobPostings = async (page = 0, size = 20, status = null) => {
+  const params = { page, size };
+  if (status) params.status = status;
+  const res = await client.get('/api/job-postings', { params });
   return res.data.data;
 };
 

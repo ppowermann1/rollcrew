@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import FilmLogo from '../common/FilmLogo';
 import IconBtn from '../common/IconBtn';
-import { IconSearch, IconSun, IconMoon } from '../common/Icons';
+import { IconBell, IconSun, IconMoon } from '../common/Icons';
 
 export default function Header() {
   const { theme, toggle } = useTheme();
@@ -40,7 +40,8 @@ export default function Header() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          <IconBtn><IconSearch size={20} /></IconBtn>
+          <IconBtn onClick={() => navigate('/notifications')}><IconBell size={20} /></IconBtn>
+
           <IconBtn onClick={toggle}>
             {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
           </IconBtn>

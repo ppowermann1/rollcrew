@@ -1,8 +1,7 @@
 // LoginPage — 로그인 페이지
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { IconBack } from '../components/common/Icons';
-import IconBtn from '../components/common/IconBtn';
+import BackBtn from '../components/common/BackBtn';
 import FilmLogo from '../components/common/FilmLogo';
 
 export default function LoginPage() {
@@ -22,7 +21,7 @@ export default function LoginPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)',
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate(-1)} />
       </div>
 
       <div style={{
