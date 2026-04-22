@@ -1,6 +1,7 @@
 // HomePage — 홈 (커뮤니티 + 구인구직 탭)
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isPostRead } from '../utils/readTracker';
 import Header from '../components/layout/Header';
 import FeedItem from '../components/community/FeedItem';
 import JobRow from '../components/job/JobRow';
@@ -42,6 +43,8 @@ export default function HomePage() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const prevRefreshAt = useRef(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -74,6 +77,16 @@ export default function HomePage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // 로고/홈탭 새로고침 트리거
+  useEffect(() => {
+    const refreshAt = location.state?.refreshAt;
+    if (!refreshAt || refreshAt === prevRefreshAt.current) return;
+    prevRefreshAt.current = refreshAt;
+    setRefreshing(true);
+    fetchData();
+    setTimeout(() => setRefreshing(false), 250);
+  }, [location.state?.refreshAt]);
 
   // 구인구직 필터링 (프론트에서)
   const filteredJobs = activeJobCat === 'ALL'
@@ -185,7 +198,11 @@ export default function HomePage() {
       </div>
 
       {/* 피드 콘텐츠 */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80, position: 'relative' }}>
+      <div style={{
+        flex: 1, overflowY: 'auto', paddingBottom: 80, position: 'relative',
+        opacity: refreshing ? 0.35 : 1,
+        transition: refreshing ? 'none' : 'opacity 0.2s ease',
+      }}>
         {loading && (
           <div className="flex-center" style={{ padding: 40 }}>
             <div className="spinner" />
@@ -225,7 +242,7 @@ export default function HomePage() {
           )}
 
           {!loading && !error && tab === 'community' && posts.map((p, i) => (
-            <FeedItem key={p.id || i} post={p} onClick={handleOpenPost} />
+            <FeedItem key={p.id || i} post={p} onClick={handleOpenPost} isRead={isPostRead('community', p.id)} />
           ))}
 
           {!loading && !error && tab === 'job' && filteredJobs.length === 0 && (
@@ -236,7 +253,7 @@ export default function HomePage() {
           )}
 
           {!loading && !error && tab === 'job' && filteredJobs.map(j => (
-            <JobRow key={j.id} job={j} onClick={handleOpenJob} />
+            <JobRow key={j.id} job={j} onClick={handleOpenJob} isRead={isPostRead('job', j.id)} />
           ))}
           
           {!loading && !error && tab === 'community' && posts.length > 0 && (

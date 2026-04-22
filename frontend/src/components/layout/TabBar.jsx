@@ -58,7 +58,13 @@ export default function TabBar() {
           <button
             key={tab.id}
             id={`tab-${tab.id}`}
-            onClick={() => navigate(tab.path)}
+            onClick={() => {
+            if (tab.id === 'home' && location.pathname === '/') {
+              navigate('/', { state: { refreshAt: Date.now() } });
+            } else {
+              navigate(tab.path);
+            }
+          }}
             style={{
               flex: 1,
               background: 'transparent',

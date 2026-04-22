@@ -20,18 +20,25 @@ public class NotificationController {
 
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications(@AuthenticationPrincipal Long userId) {
-        List<NotificationResponse> responses = notificationService.getNotifications(userId);
+    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(required = false) Boolean unreadOnly) {
+        List<NotificationResponse> responses = notificationService.getNotifications(userId, unreadOnly);
         return ResponseEntity.ok(ApiResponse.ok(responses));
-
     }
 
-    @PatchMapping("/{notificationId}")
+    @PatchMapping("/{notificationId}/read")
     public ResponseEntity<ApiResponse<Void>> markAsRead(@PathVariable Long notificationId) {
-
         notificationService.markAsRead(notificationId);
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
 
+    @PatchMapping("/read-by-reference/{referenceId}")
+    public ResponseEntity<ApiResponse<Void>> markAsReadByReference(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long referenceId) {
+        notificationService.markAsReadByReference(userId, referenceId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
 

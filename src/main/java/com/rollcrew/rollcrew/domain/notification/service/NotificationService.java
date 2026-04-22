@@ -35,11 +35,13 @@ public class NotificationService {
         return NotificationResponse.from(notification);
     }
 
-    public List<NotificationResponse> getNotifications(Long userId) {
+    public List<NotificationResponse> getNotifications(Long userId, Boolean unreadOnly) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        List<Notification> notifications = notificationRepository.findByReceiverOrderByCreatedAtDesc(user);
+        List<Notification> notifications = (unreadOnly != null && unreadOnly)
+                ? notificationRepository.findByReceiverAndIsReadOrderByCreatedAtDesc(user, false)
+                : notificationRepository.findByReceiverOrderByCreatedAtDesc(user);
 
         return notifications.stream()
                 .map(NotificationResponse::from)
@@ -51,6 +53,12 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
         notification.markAsRead();
+    }
+
+    public void markAsReadByReference(Long userId, Long referenceId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        notificationRepository.markAsReadByReceiverAndReferenceId(user, referenceId);
     }
 
 }

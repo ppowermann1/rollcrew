@@ -58,7 +58,7 @@ const isPastShootingDate = (shootingDates) => {
   return !isNaN(lastDate) && lastDate < today;
 };
 
-export default function JobRow({ job, onClick }) {
+export default function JobRow({ job, onClick, isRead = false }) {
   const cat = JOB_CATEGORIES[job.category] || JOB_CATEGORIES.ETC;
   const isOpen = job.status === 'OPEN';
   const isPast = isPastShootingDate(job.shootingDates);
@@ -73,6 +73,8 @@ export default function JobRow({ job, onClick }) {
         cursor: 'pointer',
         opacity: isDisabled ? 0.4 : 1,
         transition: 'background var(--transition-fast)',
+        outline: isRead ? 'none' : '4.5px solid var(--text-muted)',
+        outlineOffset: -8,
       }}
     >
       {/* 카테고리 + 모집상태 + 촬영일 */}
@@ -98,12 +100,15 @@ export default function JobRow({ job, onClick }) {
       </div>
 
       {/* 제목 */}
-      <div style={{
-        fontSize: 15, fontWeight: 700, lineHeight: 1.4,
-        letterSpacing: -0.3, color: 'var(--text)', marginBottom: 6,
-        textDecoration: isOpen ? 'none' : 'line-through',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>{job.title}</div>
+      <div style={{ marginBottom: 6 }}>
+        <div style={{
+          fontSize: 15, fontWeight: 700, lineHeight: 1.4,
+          letterSpacing: -0.3,
+          color: isRead ? 'var(--text-faint)' : 'var(--text)',
+          textDecoration: isOpen ? 'none' : 'line-through',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{job.title}</div>
+      </div>
 
       {/* 내용 미리보기 */}
       <div style={{

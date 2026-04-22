@@ -8,6 +8,7 @@ import CommentItem from '../components/community/CommentItem';
 import BackBtn from '../components/common/BackBtn';
 import { IconMore, IconThumbUp, IconThumbDown, IconShare, IconPlus } from '../components/common/Icons';
 import { getPost, togglePostLike, updatePost, deletePost } from '../api/communityApi';
+import { markPostRead } from '../utils/readTracker';
 import { getComments, createComment, toggleCommentLike } from '../api/commentApi';
 import { useAuth } from '../context/AuthContext';
 import { timeAgo } from '../utils/time';
@@ -51,6 +52,7 @@ export default function PostDetailPage() {
           getComments(postId, 0),
         ]);
         setPost(postData);
+        markPostRead('community', postId);
         setComments(commentsData?.comments || []);
         setCommTotal(commentsData?.totalPages || 1);
         setLikeCount(postData.likeCount || 0);

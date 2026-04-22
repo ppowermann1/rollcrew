@@ -7,6 +7,7 @@ import { IconMore } from '../components/common/Icons';
 import { getJobPosting, deleteJobPosting, updateJobPosting, createApply, getApplies, updateApplyStatus, cancelApply, getMyApply } from '../api/jobApi';
 import { getProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
+import { markPostRead } from '../utils/readTracker';
 
 const isPastShootingDate = (shootingDates) => {
   if (!shootingDates) return false;
@@ -67,6 +68,11 @@ export default function JobDetailPage() {
   const [acceptedName, setAcceptedName] = useState('');
   const [confirmApply, setConfirmApply] = useState(null); // { applyId, applicantNickname, message }
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
+  const [expandedMessages, setExpandedMessages] = useState({});
+
+  const toggleMessage = (applyId) =>
+    setExpandedMessages(prev => ({ ...prev, [applyId]: !prev[applyId] }));
 
   const textareaRef = useRef(null);
 
@@ -76,6 +82,7 @@ export default function JobDetailPage() {
       try {
         const data = await getJobPosting(jobId);
         setJob(data);
+        markPostRead('job', jobId);
       } catch (err) {
         console.error('구인구직 로딩 실패:', err);
         setError('게시글을 불러올 수 없습니다');
@@ -421,9 +428,10 @@ export default function JobDetailPage() {
               </div>
             )}
 
-            {/* 지원자 카드 목록 */}
-            {!applicantsLoading && applicants.map(a => {
+            {/* 지원자 카드 목록 — REJECTED 제외 */}
+            {!applicantsLoading && applicants.filter(a => a.status !== 'REJECTED').map(a => {
               const st = STATUS_STYLE[a.status] || STATUS_STYLE.PENDING;
+              const msgOpen = !!expandedMessages[a.applyId];
               return (
                 <div key={a.applyId} style={{
                   padding: '14px 16px',
@@ -433,7 +441,7 @@ export default function JobDetailPage() {
                   marginBottom: 8,
                 }}>
                   {/* 닉네임 + 상태 배지 */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: a.message ? 8 : (a.status === 'PENDING' ? 10 : 0) }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{a.applicantNickname}</span>
                     <span style={{
                       fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
@@ -441,12 +449,43 @@ export default function JobDetailPage() {
                     }}>{st.label}</span>
                   </div>
 
-                  {/* 메시지 */}
+                  {/* 자기소개 토글 */}
                   {a.message && (
-                    <p style={{
-                      margin: `0 0 ${a.status === 'PENDING' ? 10 : a.status === 'ACCEPTED' ? 10 : 0}px`,
-                      fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55,
-                    }}>{a.message}</p>
+                    <div style={{ marginBottom: 10 }}>
+                      <button
+                        onClick={() => toggleMessage(a.applyId)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          width: '100%',
+                          padding: '7px 10px',
+                          background: 'var(--bg-sunken)',
+                          border: 'none',
+                          borderRadius: msgOpen ? '8px 8px 0 0' : 8,
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-sans)',
+                        }}
+                      >
+                        <span style={{ flex: 1, textAlign: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>자기소개 보기</span>
+                        <span style={{
+                          fontSize: 10, color: 'var(--text-faint)',
+                          transition: 'transform 0.2s',
+                          display: 'inline-block',
+                          transform: msgOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}>▼</span>
+                      </button>
+                      {msgOpen && (
+                        <p style={{
+                          margin: 0,
+                          fontSize: 14, color: 'var(--text)', lineHeight: 1.55,
+                          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                          padding: '12px 14px',
+                          background: 'var(--bg-sunken)',
+                          borderRadius: '0 0 8px 8px',
+                          fontFamily: "'Pretendard', 'Apple SD Gothic Neo', sans-serif",
+                          letterSpacing: -0.2,
+                        }}>{a.message}</p>
+                      )}
+                    </div>
                   )}
 
                   {/* 수락/거절 버튼 — PENDING일 때만 */}
@@ -486,6 +525,59 @@ export default function JobDetailPage() {
                 </div>
               );
             })}
+
+            {/* 거절한 지원자 접기/펼치기 */}
+            {!applicantsLoading && applicants.filter(a => a.status === 'REJECTED').length > 0 && (
+              <div style={{ marginTop: 4 }}>
+                <button
+                  onClick={() => setShowRejected(prev => !prev)}
+                  style={{
+                    width: '100%', padding: '10px 14px',
+                    background: 'transparent',
+                    border: '1px dashed var(--border)',
+                    borderRadius: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  <span style={{ fontSize: 13, color: 'var(--text-faint)', fontWeight: 600 }}>
+                    거절한 지원자 {applicants.filter(a => a.status === 'REJECTED').length}명
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+                    {showRejected ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {showRejected && applicants.filter(a => a.status === 'REJECTED').map(a => {
+                  const st = STATUS_STYLE.REJECTED;
+                  return (
+                    <div key={a.applyId} style={{
+                      padding: '12px 16px',
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      marginTop: 6,
+                      opacity: 0.6,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{a.applicantNickname}</span>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
+                          background: st.bg, color: st.color,
+                        }}>{st.label}</span>
+                      </div>
+                      {a.message && (
+                        <p style={{
+                          margin: '6px 0 0',
+                          fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55,
+                        }}>{a.message}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

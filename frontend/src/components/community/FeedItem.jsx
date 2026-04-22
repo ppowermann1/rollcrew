@@ -3,7 +3,7 @@ import Avatar from '../common/Avatar';
 import { IconThumbUp, IconThumbDown, IconComment } from '../common/Icons';
 import { timeAgo } from '../../utils/time';
 
-export default function FeedItem({ post, onClick }) {
+export default function FeedItem({ post, onClick, isRead = false }) {
   return (
     <div
       onClick={() => onClick && onClick(post)}
@@ -12,6 +12,9 @@ export default function FeedItem({ post, onClick }) {
         borderBottom: '1px solid var(--border)',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'background var(--transition-fast)',
+        borderBottom: '1px solid var(--border)',
+        outline: isRead ? 'none' : '4.5px solid var(--text-muted)',
+        outlineOffset: -8,
       }}
     >
       {/* 상단: 카테고리 + 시간 */}
@@ -34,10 +37,16 @@ export default function FeedItem({ post, onClick }) {
       </div>
 
       {/* 제목 */}
-      <div style={{
-        fontSize: 15, fontWeight: 700, lineHeight: 1.4,
-        letterSpacing: -0.3, color: 'var(--text)', marginBottom: 5,
-      }}>{post.title}</div>
+      <div style={{ marginBottom: 5 }}>
+        <div style={{
+          fontSize: 15, fontWeight: 700, lineHeight: 1.4,
+          letterSpacing: -0.3,
+          color: isRead ? 'var(--text-faint)' : 'var(--text)',
+          display: '-webkit-box', WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>{post.title}</div>
+      </div>
+
 
       {/* 본문 미리보기 */}
       {post.content && (

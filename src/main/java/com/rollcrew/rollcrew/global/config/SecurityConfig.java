@@ -27,6 +27,7 @@ public class SecurityConfig {
         http
                 // 공통 보안 설정
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**", "/oauth2/**", "/login/**",
