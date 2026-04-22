@@ -101,4 +101,16 @@ public class ApplyService {
         applyRepository.delete(apply);
 
     }
+
+
+    public ApplyResponse getMyApply(Long jobPostId, Long userId) {
+
+
+        Apply apply = applyRepository.findByJobPost_IdAndApplicant_Id(jobPostId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLY_NOT_FOUND));
+
+
+        return ApplyResponse.from(apply);
+
+    }
 }
