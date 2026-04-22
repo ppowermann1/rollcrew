@@ -7,7 +7,10 @@ import com.rollcrew.rollcrew.domain.jobApply.dto.ApplyRequest;
 import com.rollcrew.rollcrew.domain.jobApply.dto.ApplyResponse;
 import com.rollcrew.rollcrew.domain.jobApply.dto.ApplyStatusRequest;
 import com.rollcrew.rollcrew.domain.jobApply.entity.Apply;
+import com.rollcrew.rollcrew.domain.jobApply.entity.ApplyStatus;
 import com.rollcrew.rollcrew.domain.jobApply.repository.ApplyRepository;
+import com.rollcrew.rollcrew.domain.notification.entity.NotificationType;
+import com.rollcrew.rollcrew.domain.notification.service.NotificationService;
 import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
@@ -26,6 +29,7 @@ public class ApplyService {
     private final UserRepository userRepository;
     private final JobPostRepository jobPostRepository;
     private final ApplyRepository applyRepository;
+    private final NotificationService notificationService;
 
     public ApplyResponse createApply(Long jobPostId, Long userid, ApplyRequest request) {
 
@@ -52,6 +56,12 @@ public class ApplyService {
                 message(request.getMessage())
                 .build();
         Apply save = applyRepository.save(build);
+
+        notificationService.createNotification(jobPost.getUser(),
+                NotificationType.JOB_APPLY,
+                user.getNickname() + "님이 지원했습니다",
+                jobPost.getId());
+
 
         return ApplyResponse.from(save);
 
@@ -86,6 +96,18 @@ public class ApplyService {
 
         apply.updateStatus(request.getStatus());
 
+        NotificationType notificationType = request.getStatus() == ApplyStatus.ACCEPTED
+                ? NotificationType.JOB_ACCEPTED
+                : NotificationType.JOB_REJECTED;
+
+        notificationService.createNotification(
+                apply.getApplicant(),
+                notificationType,
+                apply.getJobPost().getTitle() + " 지원이 " + (notificationType ==
+                        NotificationType.JOB_ACCEPTED ? "수락" : "거절") + "됐습니다",
+                apply.getJobPost().getId()
+        );
+
         return ApplyResponse.from(apply);
     }
 
@@ -99,6 +121,18 @@ public class ApplyService {
         }
 
         applyRepository.delete(apply);
+
+    }
+
+
+    public ApplyResponse getMyApply(Long jobPostId, Long userId) {
+
+
+        Apply apply = applyRepository.findByJobPost_IdAndApplicant_Id(jobPostId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLY_NOT_FOUND));
+
+
+        return ApplyResponse.from(apply);
 
     }
 }

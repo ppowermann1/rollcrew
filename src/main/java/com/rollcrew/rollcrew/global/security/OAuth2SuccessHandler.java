@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -20,24 +21,21 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtProvider jwtProvider;
 
+    @Value("${frontend.url:http://localhost:3000}")
+    private String frontendUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
 
-
-        // 1. CustomOAuth2User 꺼내기
         CustomOAuth2User customOAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
-        // 2. userId, role 꺼내기
         Long userId = customOAuth2User.getUser().getId();
         Role role = customOAuth2User.getUser().getRole();
 
-        // 3. JWT 발급
         String token = jwtProvider.generateToken(userId, role);
-        log.info("JWT: {}", token);
+        log.info("JWT 발급 완료 userId={}", userId);
 
-        //프론트로 redirect
-        String redirectUrl = "http://localhost:3000/?token=" + token;
-        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+        getRedirectStrategy().sendRedirect(request, response, frontendUrl + "/?token=" + token);
     }
 }

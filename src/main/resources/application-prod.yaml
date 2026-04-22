@@ -4,18 +4,18 @@ spring:
       client:
         registration:
           naver:
-            client-id: 63c_jRiWh1GWSfNx9RZ1
-            client-secret: jYpMWj_RKB
-            redirect-uri: http://localhost:8080/login/oauth2/code/naver
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
+            redirect-uri: ${BACKEND_URL}/login/oauth2/code/naver
             authorization-grant-type: authorization_code
             scope:
               - name
               - email
               - profile_image
           kakao:
-            client-id: 0f621fcf41239bcca9fdc15c633529b7
-            client-secret: 1cepEpUgJasLjJXeJvbdwKsULTV9qQfQ
-            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            redirect-uri: ${BACKEND_URL}/login/oauth2/code/kakao
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
             scope:
@@ -32,29 +32,18 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
   datasource:
-    url: jdbc:h2:file:~/rollcrew-db  # 파일 모드
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update  # create 면 매번 날아가니까 update로
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
 jwt:
-  secret: rollcrew-secret-key-must-be-at-least-32-characters-long
+  secret: ${JWT_SECRET}
   expiration: 86400000
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui/index.html
-  api-docs:
-    path: /v3/api-docs
-  default-produces-media-type: application/json
-
-logging:
-  level:
-    org.springdoc: DEBUG
-    org.springframework.security: WARN
-    org.springframework.security.oauth2: WARN
+frontend:
+  url: ${FRONTEND_URL}

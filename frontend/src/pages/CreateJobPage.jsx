@@ -1,8 +1,7 @@
 // CreateJobPage — 구인구직 작성
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import IconBtn from '../components/common/IconBtn';
-import { IconBack } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
 import { createJobPosting } from '../api/jobApi';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,7 +17,7 @@ export default function CreateJobPage() {
   const { isAuthenticated } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('FILMING');
+  const [category, setCategory] = useState('');
   
   const [dates, setDates] = useState(['']);
   const [endDate, setEndDate] = useState('');
@@ -28,6 +27,12 @@ export default function CreateJobPage() {
   const [error, setError] = useState(null);
 
   const hasValidDate = isRange ? (dates[0] && endDate) : dates.some(d => d.trim() !== '');
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const isPastDate = (d) => d && new Date(d) < today;
+  const pastDateWarn = isRange
+    ? isPastDate(dates[0])
+    : dates.some(d => isPastDate(d));
 
   const addDate = () => {
     if (dates.length < 5) setDates([...dates, '']);
@@ -48,7 +53,7 @@ export default function CreateJobPage() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim() || !hasValidDate || submitting) return;
+    if (!title.trim() || !content.trim() || !hasValidDate || !category || pastDateWarn || submitting) return;
     if (!isAuthenticated) { navigate('/login'); return; }
 
     setSubmitting(true);
@@ -83,18 +88,18 @@ export default function CreateJobPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate('/', { state: { tab: 'job' } })}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate('/', { state: { tab: 'job' } })} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>구인구직 등록</div>
         <button
           id="btn-submit-job"
           onClick={handleSubmit}
-          disabled={!title.trim() || !content.trim() || !hasValidDate || submitting}
+          disabled={!title.trim() || !content.trim() || !hasValidDate || !category || pastDateWarn || submitting}
           style={{
             padding: '8px 16px', borderRadius: 8,
-            background: title.trim() && content.trim() && hasValidDate ? 'var(--accent)' : 'var(--surface)',
-            color: title.trim() && content.trim() && hasValidDate ? 'var(--accent-ink)' : 'var(--text-faint)',
+            background: title.trim() && content.trim() && hasValidDate && category && !pastDateWarn ? 'var(--accent)' : 'var(--surface)',
+            color: title.trim() && content.trim() && hasValidDate && category && !pastDateWarn ? 'var(--accent-ink)' : 'var(--text-faint)',
             fontSize: 13, fontWeight: 700,
             transition: 'all var(--transition-fast)',
           }}
@@ -112,10 +117,12 @@ export default function CreateJobPage() {
 
         {/* 카테고리 선택 */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{
-            fontSize: 12, fontWeight: 700, color: 'var(--text-muted)',
-            display: 'block', marginBottom: 8,
-          }}>카테고리</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>카테고리</label>
+            {!category && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>카테고리를 선택해주세요 ↓</span>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {CATEGORIES.map(c => (
               <button
@@ -181,7 +188,10 @@ export default function CreateJobPage() {
                 <input
                   type="date"
                   value={dates[0]}
-                  onChange={e => updateDate(0, e.target.value)}
+                  onChange={e => {
+                    updateDate(0, e.target.value);
+                    if (endDate && e.target.value > endDate) setEndDate('');
+                  }}
                   style={{
                     flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
                     background: 'var(--surface)', border: '1px solid var(--border)',
@@ -192,6 +202,7 @@ export default function CreateJobPage() {
                 <input
                   type="date"
                   value={endDate}
+                  min={dates[0] || undefined}
                   onChange={e => setEndDate(e.target.value)}
                   style={{
                     flex: 1, height: 44, borderRadius: 10, padding: '0 14px',
@@ -239,6 +250,17 @@ export default function CreateJobPage() {
               </>
             )}
           </div>
+          {pastDateWarn && (
+            <div style={{
+              marginTop: 10, padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.35)',
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 13, color: '#e6ac00',
+            }}>
+              <span>⚠️</span>
+              <span>이미 지난 날짜입니다. 확인 후 등록해주세요.</span>
+            </div>
+          )}
         </div>
 
         {/* 본문 */}

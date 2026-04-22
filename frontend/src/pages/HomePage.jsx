@@ -1,6 +1,7 @@
 // HomePage — 홈 (커뮤니티 + 구인구직 탭)
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isPostRead } from '../utils/readTracker';
 import Header from '../components/layout/Header';
 import FeedItem from '../components/community/FeedItem';
 import JobRow from '../components/job/JobRow';
@@ -36,11 +37,14 @@ export default function HomePage() {
   const [commTotal, setCommTotal] = useState(1);
   const [jobPage, setJobPage] = useState(0);
   const [jobTotal, setJobTotal] = useState(1);
+  const [jobStatusFilter, setJobStatusFilter] = useState('OPEN');
 
   const [posts, setPosts] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const prevRefreshAt = useRef(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -52,7 +56,7 @@ export default function HomePage() {
         setPosts(data.content || data || []);
         setCommTotal(data.totalPages || 1);
       } else {
-        const data = await getJobPostings(jobPage, 20);
+        const data = await getJobPostings(jobPage, 20, jobStatusFilter);
         setJobs(data.content || data || []);
         setJobTotal(data.totalPages || 1);
       }
@@ -68,11 +72,21 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [tab, commPage, jobPage, activeCat]);
+  }, [tab, commPage, jobPage, activeCat, jobStatusFilter]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // 로고/홈탭 새로고침 트리거
+  useEffect(() => {
+    const refreshAt = location.state?.refreshAt;
+    if (!refreshAt || refreshAt === prevRefreshAt.current) return;
+    prevRefreshAt.current = refreshAt;
+    setRefreshing(true);
+    fetchData();
+    setTimeout(() => setRefreshing(false), 250);
+  }, [location.state?.refreshAt]);
 
   // 구인구직 필터링 (프론트에서)
   const filteredJobs = activeJobCat === 'ALL'
@@ -142,6 +156,21 @@ export default function HomePage() {
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg)',
       }}>
+        {tab === 'job' && (
+          <button
+            onClick={() => { setJobStatusFilter(v => v === 'OPEN' ? null : 'OPEN'); setJobPage(0); }}
+            style={{
+              height: 34, padding: '0 12px', whiteSpace: 'nowrap', flexShrink: 0,
+              border: `1.5px solid ${jobStatusFilter === 'OPEN' ? 'var(--success)' : 'var(--border)'}`,
+              borderRadius: 17,
+              background: jobStatusFilter === 'OPEN' ? 'rgba(91,212,166,0.13)' : 'transparent',
+              color: jobStatusFilter === 'OPEN' ? 'var(--success)' : 'var(--text-muted)',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              transition: 'all var(--transition-fast)',
+            }}
+          >{jobStatusFilter === 'OPEN' ? '● 모집중' : '전체'}</button>
+        )}
         {(tab === 'community' ? COMMUNITY_CATEGORIES : JOB_CATEGORIES).map(c => {
           const isActive = tab === 'community'
             ? activeCat === c.id
@@ -169,7 +198,11 @@ export default function HomePage() {
       </div>
 
       {/* 피드 콘텐츠 */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80, position: 'relative' }}>
+      <div style={{
+        flex: 1, overflowY: 'auto', paddingBottom: 80, position: 'relative',
+        opacity: refreshing ? 0.35 : 1,
+        transition: refreshing ? 'none' : 'opacity 0.2s ease',
+      }}>
         {loading && (
           <div className="flex-center" style={{ padding: 40 }}>
             <div className="spinner" />
@@ -209,7 +242,7 @@ export default function HomePage() {
           )}
 
           {!loading && !error && tab === 'community' && posts.map((p, i) => (
-            <FeedItem key={p.id || i} post={p} onClick={handleOpenPost} />
+            <FeedItem key={p.id || i} post={p} onClick={handleOpenPost} isRead={isPostRead('community', p.id)} />
           ))}
 
           {!loading && !error && tab === 'job' && filteredJobs.length === 0 && (
@@ -220,7 +253,7 @@ export default function HomePage() {
           )}
 
           {!loading && !error && tab === 'job' && filteredJobs.map(j => (
-            <JobRow key={j.id} job={j} onClick={handleOpenJob} />
+            <JobRow key={j.id} job={j} onClick={handleOpenJob} isRead={isPostRead('job', j.id)} />
           ))}
           
           {!loading && !error && tab === 'community' && posts.length > 0 && (
@@ -255,26 +288,18 @@ export default function HomePage() {
               로그인이 필요한 서비스입니다.
             </h2>
             <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 24, wordBreak: 'keep-all' }}>
-              롤크루의 현직 영상인들과 소통하려면<br />카카오로 시작해보세요!
+              롤크루의 현직 영상인들과 소통하려면<br />로그인이 필요합니다.
             </p>
             <button
-              onClick={() => {
-                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-                window.location.href = `${baseUrl}/oauth2/authorization/kakao`;
-              }}
+              onClick={() => navigate('/login')}
               style={{
-                background: '#FEE500', color: '#191919',
+                background: 'var(--accent)', color: '#ffffff',
                 border: 'none', padding: '14px 24px', borderRadius: 12,
                 fontSize: 15, fontWeight: 800, width: '100%',
                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                boxShadow: '0 4px 10px rgba(254, 229, 0, 0.2)'
               }}
             >
-              <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor">
-                <path d="M12 3C6.477 3 2 6.556 2 10.944c0 2.822 1.83 5.3 4.673 6.64-.176.621-.634 2.222-.646 2.274-.015.068.03.136.088.136h.02c.045 0 .864-.114 2.05-.623.593.178 1.22.272 1.815.272 5.523 0 10-3.556 10-7.944C24 6.556 19.523 3 12 3z"/>
-              </svg>
-              카카오로 1초 만에 시작하기
+              로그인하기
             </button>
           </div>
         )}

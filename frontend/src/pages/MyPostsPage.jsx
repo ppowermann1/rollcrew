@@ -1,10 +1,10 @@
 // MyPostsPage — 내 게시글 (커뮤니티 + 구인구직 탭)
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import IconBtn from '../components/common/IconBtn';
-import { IconBack } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
 import FeedItem from '../components/community/FeedItem';
 import JobRow from '../components/job/JobRow';
+import { isPostRead } from '../utils/readTracker';
 import Pagination from '../components/common/Pagination';
 import { getMyPosts } from '../api/communityApi';
 import { getMyJobPostings } from '../api/jobApi';
@@ -18,7 +18,7 @@ export default function MyPostsPage() {
     if (!isAuthenticated) navigate('/login', { replace: true });
   }, [isAuthenticated, navigate]);
 
-  const [tab, setTab] = useState('community');
+  const [tab, setTab] = useState('job');
   const [commPage, setCommPage] = useState(0);
   const [commTotal, setCommTotal] = useState(1);
   const [jobPage, setJobPage] = useState(0);
@@ -75,7 +75,7 @@ export default function MyPostsPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate(-1)}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate(-1)} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--text)',
         }}>내 게시글</div>
@@ -92,8 +92,8 @@ export default function MyPostsPage() {
         zIndex: 40,
       }}>
         {[
-          { id: 'community', label: '커뮤니티' },
           { id: 'job', label: '구인구직' },
+          { id: 'community', label: '커뮤니티' },
         ].map(tb => (
           <button
             key={tb.id}
@@ -135,7 +135,7 @@ export default function MyPostsPage() {
           )}
 
           {!loading && !error && tab === 'community' && posts.map((p, i) => (
-            <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} />
+            <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} isRead={isPostRead('community', p.id)} />
           ))}
 
           {!loading && !error && tab === 'job' && jobs.length === 0 && (
@@ -146,7 +146,7 @@ export default function MyPostsPage() {
           )}
 
           {!loading && !error && tab === 'job' && jobs.map(j => (
-            <JobRow key={j.id} job={j} onClick={handleOpenJob} />
+            <JobRow key={j.id} job={j} onClick={handleOpenJob} isRead={isPostRead('job', j.id)} />
           ))}
 
           {!loading && !error && tab === 'community' && posts.length > 0 && (

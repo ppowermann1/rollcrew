@@ -22,7 +22,8 @@ public enum ErrorCode {
     NOT_POST_OWNER(HttpStatus.FORBIDDEN, "게시글 작성자만 확인할 수 있습니다"),
     APPLY_NOT_FOUND(HttpStatus.NOT_FOUND, "지원 내역을 찾을 수 없습니다"),
     APPLY_NOT_OWNER(HttpStatus.FORBIDDEN, "본인 지원만 취소할 수 있습니다."),
-    PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다");
+    PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다"),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다");
 
     private final HttpStatus httpStatus;
     private final String message;

@@ -2,6 +2,7 @@ package com.rollcrew.rollcrew.global.config;
 
 import com.rollcrew.rollcrew.global.security.CustomOAuth2UserService;
 import com.rollcrew.rollcrew.global.security.JwtFilter;
+import com.rollcrew.rollcrew.global.security.OAuth2FailureHandler;
 import com.rollcrew.rollcrew.global.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -27,10 +29,11 @@ public class SecurityConfig {
         http
                 // 공통 보안 설정
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**", "/oauth2/**", "/login/**",
-                                "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                                "/swagger-ui/**", "/v3/api-docs/**", "/api/test/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/community/posts", "/api/job-postings").permitAll()
                         .anyRequest().authenticated()
                 );
@@ -43,6 +46,7 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
                 );
 
         return http.build();

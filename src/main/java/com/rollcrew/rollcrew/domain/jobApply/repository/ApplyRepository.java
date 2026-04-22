@@ -23,4 +23,9 @@ public interface ApplyRepository extends JpaRepository<Apply, Long> {
 
     @Query("SELECT a FROM Apply a JOIN FETCH a.applicant WHERE a.id = :applyId")
     Optional<Apply> findByIdWithApplicant(@Param("applyId") Long applyId);
+
+
+
+
+    Optional<Apply> findByJobPost_IdAndApplicant_Id(Long jobPostId, Long applicantId);
 }

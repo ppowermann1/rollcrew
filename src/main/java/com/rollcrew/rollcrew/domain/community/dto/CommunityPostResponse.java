@@ -32,5 +32,7 @@ public class CommunityPostResponse {
 
     private Long likeCount;
     private Long dislikeCount;
+    private boolean likedByMe;
+    private boolean dislikedByMe;
 
 }

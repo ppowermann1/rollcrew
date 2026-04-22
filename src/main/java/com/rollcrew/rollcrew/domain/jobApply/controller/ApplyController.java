@@ -47,9 +47,16 @@ public class ApplyController {
     @DeleteMapping("/applies/{applyId}")
     public ResponseEntity<ApiResponse<Void>> cancelApply(@PathVariable Long applyId,
                                                          @AuthenticationPrincipal Long userid) {
-        applyService.cancelApply(applyId,userid);
+        applyService.cancelApply(applyId, userid);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/job-postings/{jobPostId}/applied")
+    public ResponseEntity<ApiResponse<ApplyResponse>> getMyApply(@AuthenticationPrincipal Long userId,
+                                                           @PathVariable Long jobPostId) {
+        ApplyResponse response = applyService.getMyApply(jobPostId, userId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
 

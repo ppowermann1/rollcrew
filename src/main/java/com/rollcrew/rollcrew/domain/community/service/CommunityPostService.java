@@ -108,7 +108,7 @@ public class CommunityPostService {
     }
 
 
-    public CommunityPostResponse getCommunityPost(Long postId) {
+    public CommunityPostResponse getCommunityPost(Long postId, Long userId) {
 
         CommunityPost communityPost = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
@@ -119,6 +119,12 @@ public class CommunityPostService {
 
         long likeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.LIKE);
         long dislikeCount = communityPostLikeRepository.countByCommunityPostAndLikeType(communityPost, LikeType.DISLIKE);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        boolean likedByMe = communityPostLikeRepository.existsByUserAndCommunityPostAndLikeType(user, communityPost, LikeType.LIKE);
+        boolean dislikedByMe = communityPostLikeRepository.existsByUserAndCommunityPostAndLikeType(user, communityPost, LikeType.DISLIKE);
 
         List<String> imageUrls = communityPostImageRepository.findByCommunityPost(communityPost)
                 .stream()
@@ -136,6 +142,8 @@ public class CommunityPostService {
                 .createdAt(communityPost.getCreatedAt())
                 .likeCount(likeCount)
                 .dislikeCount(dislikeCount)
+                .likedByMe(likedByMe)
+                .dislikedByMe(dislikedByMe)
                 .build();
     }
 

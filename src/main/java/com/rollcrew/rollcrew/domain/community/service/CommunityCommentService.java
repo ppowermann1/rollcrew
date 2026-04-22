@@ -9,6 +9,8 @@ import com.rollcrew.rollcrew.domain.community.repository.CommunityCommentLikeRep
 import com.rollcrew.rollcrew.domain.community.repository.CommunityCommentRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostNicknameRepository;
 import com.rollcrew.rollcrew.domain.community.repository.CommunityPostRepository;
+import com.rollcrew.rollcrew.domain.notification.entity.NotificationType;
+import com.rollcrew.rollcrew.domain.notification.service.NotificationService;
 import com.rollcrew.rollcrew.domain.user.entity.User;
 import com.rollcrew.rollcrew.domain.user.repository.UserRepository;
 import com.rollcrew.rollcrew.global.exception.BusinessException;
@@ -36,6 +38,8 @@ public class CommunityCommentService {
     private final CommunityCommentRepository communityCommentRepository;
     private final UserRepository userRepository;
     private final CommunityCommentLikeRepository communityCommentLikeRepository;
+    private final NotificationService notificationService;
+
 
     public CommentResponse createComments(Long postId, CommentCreateRequest request, Long userId) {
 
@@ -74,6 +78,16 @@ public class CommunityCommentService {
                 .build();
 
         communityCommentRepository.save(communityComment);
+
+        if (!communityPost.getUser().getId().equals(userId)) {
+            notificationService.createNotification(
+                    communityPost.getUser(),
+                    NotificationType.COMMUNITY_COMMENT,
+                    postNickname.getNickname() + "님이 댓글을 작성했습니다",
+                    postId
+            );
+        }
+
 
         return CommentResponse.builder().
                 id(communityComment.getId())

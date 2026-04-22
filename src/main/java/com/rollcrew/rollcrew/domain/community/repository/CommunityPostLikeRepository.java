@@ -18,6 +18,8 @@ public interface CommunityPostLikeRepository extends JpaRepository<CommunityPost
 
     Optional<CommunityPostLike> findByUserAndCommunityPost(User user, CommunityPost communityPost);
 
+    boolean existsByUserAndCommunityPostAndLikeType(User user, CommunityPost communityPost, LikeType likeType);
+
     @Query("SELECT pl FROM CommunityPostLike pl WHERE pl.communityPost IN :posts")
     List<CommunityPostLike> findByCommunityPostIn(@Param("posts") List<CommunityPost> posts);
 

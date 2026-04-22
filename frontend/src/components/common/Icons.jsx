@@ -42,6 +42,7 @@ export const IconFire = (p) => <Icon {...p}><path d="M12 3c0 4-5 5-5 10a5 5 0 00
 export const IconFilter = (p) => <Icon {...p}><path d="M3 5h18l-7 8v6l-4 2v-8z"/></Icon>;
 export const IconDice = (p) => <Icon {...p}><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/></Icon>;
 export const IconEdit = (p) => <Icon {...p}><path d="M15.232 5.232l3.536 3.536M9 13l-2 6 6-2 9.5-9.5a2.5 2.5 0 00-3.536-3.536L9 13z"/></Icon>;
+export const IconRefresh = (p) => <Icon {...p}><path d="M4 12a8 8 0 018-8 8 8 0 016.32 3.09M20 12a8 8 0 01-8 8 8 8 0 01-6.32-3.09"/><path d="M20 4v4h-4M4 20v-4h4"/></Icon>;
 export const IconLogout = (p) => <Icon {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></Icon>;
 export const IconGoogle = (p) => (
   <svg width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" style={{ flexShrink: 0, display: 'block' }}>

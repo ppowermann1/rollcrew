@@ -5,8 +5,10 @@ import Avatar from '../components/common/Avatar';
 import IconBtn from '../components/common/IconBtn';
 import ShotPlaceholder from '../components/common/ShotPlaceholder';
 import CommentItem from '../components/community/CommentItem';
-import { IconBack, IconMore, IconThumbUp, IconThumbDown, IconShare, IconPlus } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
+import { IconMore, IconThumbUp, IconThumbDown, IconShare, IconPlus } from '../components/common/Icons';
 import { getPost, togglePostLike, updatePost, deletePost } from '../api/communityApi';
+import { markPostRead } from '../utils/readTracker';
 import { getComments, createComment, toggleCommentLike } from '../api/commentApi';
 import { useAuth } from '../context/AuthContext';
 import { timeAgo } from '../utils/time';
@@ -50,10 +52,13 @@ export default function PostDetailPage() {
           getComments(postId, 0),
         ]);
         setPost(postData);
+        markPostRead('community', postId);
         setComments(commentsData?.comments || []);
         setCommTotal(commentsData?.totalPages || 1);
         setLikeCount(postData.likeCount || 0);
         setDislikeCount(postData.dislikeCount || 0);
+        setLiked(postData.likedByMe || false);
+        setDisliked(postData.dislikedByMe || false);
       } catch (err) {
         console.error('게시글 로딩 실패:', err);
         setError('게시글을 불러올 수 없습니다');
@@ -162,7 +167,7 @@ export default function PostDetailPage() {
           display: 'flex', alignItems: 'center', padding: '10px 16px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
+          <BackBtn onClick={() => navigate('/', { state: { tab: 'community' } })} />
         </div>
         <div className="empty-state">
           <div className="empty-icon">😥</div>
@@ -220,7 +225,7 @@ export default function PostDetailPage() {
         background: 'var(--bg)',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate('/', { state: { tab: 'community' } })} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>커뮤니티</div>

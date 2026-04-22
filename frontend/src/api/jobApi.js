@@ -4,8 +4,10 @@ import client from './client';
 /**
  * 구인구직 목록 조회 (페이지네이션)
  */
-export const getJobPostings = async (page = 0, size = 20) => {
-  const res = await client.get('/api/job-postings', { params: { page, size } });
+export const getJobPostings = async (page = 0, size = 20, status = null) => {
+  const params = { page, size };
+  if (status) params.status = status;
+  const res = await client.get('/api/job-postings', { params });
   return res.data.data;
 };
 
@@ -74,6 +76,20 @@ export const getApplies = async (jobPostId) => {
 export const updateApplyStatus = async (applyId, status) => {
   const res = await client.patch(`/api/applies/${applyId}/status`, { status });
   return res.data.data;
+};
+
+/**
+ * 내 지원 현황 조회
+ * 지원한 적 없으면 null 반환
+ */
+export const getMyApply = async (jobPostId) => {
+  try {
+    const res = await client.get(`/api/job-postings/${jobPostId}/applied`);
+    return res.data.data;
+  } catch (err) {
+    if (err.response?.status === 404) return null;
+    throw err;
+  }
 };
 
 /**

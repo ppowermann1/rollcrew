@@ -15,8 +15,8 @@ const FEATURES = [
     icon: '💬',
     title: '건의하기',
     desc: '서비스 개선 아이디어나 불편한 점을 알려주세요',
-    url: null,
-    comingSoon: true,
+    url: 'https://forms.gle/EKPareSpthrkLefM6',
+    comingSoon: false,
   },
 ];
 

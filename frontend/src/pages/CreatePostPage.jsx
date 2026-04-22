@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import IconBtn from '../components/common/IconBtn';
-import { IconBack, IconDice } from '../components/common/Icons';
+import BackBtn from '../components/common/BackBtn';
+import { IconDice } from '../components/common/Icons';
 import { createPost } from '../api/communityApi';
 import { useAuth } from '../context/AuthContext';
 import { generateRandomNickname } from '../utils/randomNickname';
@@ -56,7 +57,7 @@ export default function CreatePostPage() {
         display: 'flex', alignItems: 'center', padding: '10px 16px',
         borderBottom: '1px solid var(--border)', background: 'var(--bg)',
       }}>
-        <IconBtn onClick={() => navigate('/', { state: { tab: 'community' } })}><IconBack size={20} /></IconBtn>
+        <BackBtn onClick={() => navigate('/', { state: { tab: 'community' } })} />
         <div style={{
           flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text)',
         }}>글쓰기</div>

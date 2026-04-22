@@ -1,12 +1,12 @@
 // TabBar — 하단 네비게이션 (시안 기반)
 import { useLocation, useNavigate } from 'react-router-dom';
-import { IconHome, IconBoard, IconBell, IconUser } from '../common/Icons';
+import { IconHome, IconBoard, IconEdit, IconUser } from '../common/Icons';
 
 const tabs = [
-  { id: 'home',  path: '/',              label: '홈',     icon: IconHome },
-  { id: 'board', path: '/features',      label: '기능',   icon: IconBoard },
-  { id: 'noti',  path: '/notifications', label: '알림',   icon: IconBell, badge: 3 },
-  { id: 'me',    path: '/profile',       label: '프로필', icon: IconUser },
+  { id: 'home',  path: '/',              label: '홈',       icon: IconHome },
+  { id: 'board', path: '/features',      label: '기능',     icon: IconBoard },
+  { id: 'myposts', path: '/profile/posts', label: '내 게시글', icon: IconEdit },
+  { id: 'me',    path: '/profile',       label: '프로필',   icon: IconUser },
 ];
 
 export default function TabBar() {
@@ -14,7 +14,7 @@ export default function TabBar() {
   const navigate = useNavigate();
 
   const getActiveTab = () => {
-    if (location.pathname === '/notifications') return 'noti';
+    if (location.pathname.startsWith('/profile/posts')) return 'myposts';
     if (location.pathname.startsWith('/profile')) return 'me';
     if (location.pathname === '/features') return 'board';
     return 'home';
@@ -58,7 +58,13 @@ export default function TabBar() {
           <button
             key={tab.id}
             id={`tab-${tab.id}`}
-            onClick={() => navigate(tab.path)}
+            onClick={() => {
+            if (tab.id === 'home' && location.pathname === '/') {
+              navigate('/', { state: { refreshAt: Date.now() } });
+            } else {
+              navigate(tab.path);
+            }
+          }}
             style={{
               flex: 1,
               background: 'transparent',
