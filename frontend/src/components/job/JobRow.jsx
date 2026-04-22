@@ -91,8 +91,7 @@ export default function JobRow({ job, onClick, isRead = false }) {
         <div style={{ flex: 1 }} />
         {job.shootingDates && (
           <span style={{
-            fontSize: 12, fontFamily: "'DM Mono', monospace",
-            color: '#fff', letterSpacing: -0.6,
+            fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: -0.2,
           }}>
             촬영일: {formatDate(job.shootingDates)}
           </span>

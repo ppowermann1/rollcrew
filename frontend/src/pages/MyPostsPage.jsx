@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import BackBtn from '../components/common/BackBtn';
 import FeedItem from '../components/community/FeedItem';
 import JobRow from '../components/job/JobRow';
+import { isPostRead } from '../utils/readTracker';
 import Pagination from '../components/common/Pagination';
 import { getMyPosts } from '../api/communityApi';
 import { getMyJobPostings } from '../api/jobApi';
@@ -134,7 +135,7 @@ export default function MyPostsPage() {
           )}
 
           {!loading && !error && tab === 'community' && posts.map((p, i) => (
-            <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} />
+            <FeedItem key={p.id || i} post={p} onClick={p.id ? handleOpenPost : undefined} isRead={isPostRead('community', p.id)} />
           ))}
 
           {!loading && !error && tab === 'job' && jobs.length === 0 && (
@@ -145,7 +146,7 @@ export default function MyPostsPage() {
           )}
 
           {!loading && !error && tab === 'job' && jobs.map(j => (
-            <JobRow key={j.id} job={j} onClick={handleOpenJob} />
+            <JobRow key={j.id} job={j} onClick={handleOpenJob} isRead={isPostRead('job', j.id)} />
           ))}
 
           {!loading && !error && tab === 'community' && posts.length > 0 && (

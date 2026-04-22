@@ -42,8 +42,10 @@ public class CommunityPostController {
 
 
     @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<CommunityPostResponse>> getCommunityPost(@PathVariable Long postId) {
-        CommunityPostResponse response = communityPostService.getCommunityPost(postId);
+    public ResponseEntity<ApiResponse<CommunityPostResponse>> getCommunityPost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Long userId) {
+        CommunityPostResponse response = communityPostService.getCommunityPost(postId, userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

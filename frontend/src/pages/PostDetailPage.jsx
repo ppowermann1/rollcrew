@@ -57,6 +57,8 @@ export default function PostDetailPage() {
         setCommTotal(commentsData?.totalPages || 1);
         setLikeCount(postData.likeCount || 0);
         setDislikeCount(postData.dislikeCount || 0);
+        setLiked(postData.likedByMe || false);
+        setDisliked(postData.dislikedByMe || false);
       } catch (err) {
         console.error('게시글 로딩 실패:', err);
         setError('게시글을 불러올 수 없습니다');

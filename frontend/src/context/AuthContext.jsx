@@ -44,9 +44,13 @@ export function AuthProvider({ children }) {
     fetchUser();
   }, [fetchUser]);
 
-  const login = () => {
-    // 백엔드에 카카오 OAuth2가 설정되어 있으므로 카카오로 리다이렉트
-    window.location.href = '/oauth2/authorization/kakao';
+  const login = (provider = 'naver') => {
+    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+  };
+
+  const loginWithToken = async (token) => {
+    localStorage.setItem('accessToken', token);
+    await fetchUser();
   };
 
   const logout = () => {
@@ -56,7 +60,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, logout, refetch: fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, loginWithToken, logout, refetch: fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

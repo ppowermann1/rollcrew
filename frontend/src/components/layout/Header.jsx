@@ -11,7 +11,7 @@ import { getNotifications } from '../../api/notificationApi';
 
 export default function Header() {
   const { theme, toggle } = useTheme();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [spinning, setSpinning] = useState(false);
@@ -86,7 +86,13 @@ export default function Header() {
             <IconRefresh size={20} sw={2} />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {isAuthenticated && user?.nickname && (
+            <span style={{
+              fontSize: 12, fontWeight: 700, color: 'var(--text-muted)',
+              letterSpacing: -0.2,
+            }}>{user.nickname}</span>
+          )}
           <div style={{ position: 'relative' }}>
             <IconBtn onClick={() => navigate('/notifications')}><IconBell size={20} /></IconBtn>
             {unreadCount > 0 && (
@@ -106,6 +112,7 @@ export default function Header() {
             {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
           </IconBtn>
         </div>
+
       </div>
     </div>
   );

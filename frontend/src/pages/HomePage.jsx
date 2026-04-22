@@ -288,26 +288,18 @@ export default function HomePage() {
               로그인이 필요한 서비스입니다.
             </h2>
             <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 24, wordBreak: 'keep-all' }}>
-              롤크루의 현직 영상인들과 소통하려면<br />카카오로 시작해보세요!
+              롤크루의 현직 영상인들과 소통하려면<br />로그인이 필요합니다.
             </p>
             <button
-              onClick={() => {
-                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-                window.location.href = `${baseUrl}/oauth2/authorization/kakao`;
-              }}
+              onClick={() => navigate('/login')}
               style={{
-                background: '#FEE500', color: '#191919',
+                background: 'var(--accent)', color: '#ffffff',
                 border: 'none', padding: '14px 24px', borderRadius: 12,
                 fontSize: 15, fontWeight: 800, width: '100%',
                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                boxShadow: '0 4px 10px rgba(254, 229, 0, 0.2)'
               }}
             >
-              <svg viewBox="0 0 24 24" width={20} height={20} fill="currentColor">
-                <path d="M12 3C6.477 3 2 6.556 2 10.944c0 2.822 1.83 5.3 4.673 6.64-.176.621-.634 2.222-.646 2.274-.015.068.03.136.088.136h.02c.045 0 .864-.114 2.05-.623.593.178 1.22.272 1.815.272 5.523 0 10-3.556 10-7.944C24 6.556 19.523 3 12 3z"/>
-              </svg>
-              카카오로 1초 만에 시작하기
+              로그인하기
             </button>
           </div>
         )}

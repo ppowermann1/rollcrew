@@ -56,3 +56,5 @@ springdoc:
 logging:
   level:
     org.springdoc: DEBUG
+    org.springframework.security: WARN
+    org.springframework.security.oauth2: WARN
